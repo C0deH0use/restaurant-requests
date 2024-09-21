@@ -1,5 +1,6 @@
-package pl.codehouse.restaurant.orders;
+package pl.codehouse.restaurant.request;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import pl.codehouse.restaurant.ExecutionResult;
@@ -39,7 +40,19 @@ class ExecutionResultTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isFailure()).isTrue();
         assertThat(result.value()).isEmpty();
-        assertThat(result.exception()).hasCause(exception);
+        assertThat(result.exception()).isEqualTo(exception);
+    }
+
+    @Test
+    @DisplayName("should throw exception when handle does not contain value")
+    void should_throw_exception_when_handle_does_not_contain_value() {
+        // given
+        RuntimeException exception = new RuntimeException("Test Exception");
+        ExecutionResult<String> result = ExecutionResult.failure(exception);
+
+        Assertions.assertThatThrownBy(result::handle)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Test Exception");
     }
 
     @Test

@@ -29,12 +29,13 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("org.springframework.boot:spring-boot-starter-jersey")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
-    implementation("org.springframework:spring-jdbc")
+
     implementation("org.springframework.kafka:spring-kafka")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
@@ -52,8 +53,8 @@ dependencies {
 
     testImplementation("io.rest-assured:rest-assured:5.5.0")
     testImplementation("io.rest-assured:json-path:5.5.0")
-    testImplementation("io.rest-assured:xml-path:5.5.0")
     testImplementation("io.rest-assured:json-schema-validator:5.5.0")
+    testImplementation("io.rest-assured:spring-web-test-client:5.5.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

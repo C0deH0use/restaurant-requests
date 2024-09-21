@@ -1,4 +1,4 @@
-package pl.codehouse.restaurant.orders;
+package pl.codehouse.restaurant.request;
 
 import org.springframework.boot.SpringApplication;
 import pl.codehouse.restaurant.RestaurantOrdersApplication;
