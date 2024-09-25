@@ -1,13 +1,12 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant;
 
 import org.springframework.boot.SpringApplication;
-import pl.codehouse.restaurant.RestaurantOrdersApplication;
 
 public class TestRestaurantOrdersApplication {
 
     public static void main(String[] args) {
         SpringApplication.from(RestaurantOrdersApplication::main)
-                .with(TestcontainersConfiguration.class)
+                .with(pl.codehouse.restaurant.TestcontainersConfiguration.class)
                 .run(args);
     }
 
