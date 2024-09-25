@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import pl.codehouse.restaurant.TestcontainersConfiguration;
 import reactor.core.publisher.Flux;
 
 import java.util.List;

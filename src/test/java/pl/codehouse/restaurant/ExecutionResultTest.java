@@ -1,9 +1,8 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import pl.codehouse.restaurant.ExecutionResult;
 
 import java.util.Optional;
 
