@@ -23,21 +23,10 @@ repositories {
     mavenCentral()
 }
 
-sourceSets {
-    create("integrationTest") {
-        java {
-            setSrcDirs(listOf("src/integrationTest/java"))
-        }
-        resources {
-            setSrcDirs(listOf("src/integrationTest/resources"))
-        }
-    }
-}
-
 idea {
     module {
-        testSources.from(sourceSets["integrationTest"].java.srcDirs)
-        testResources.from(sourceSets["integrationTest"].resources.srcDirs)
+        testSources.from(project.sourceSets.getByName("integrationTest").java.srcDirs)
+        testResources.from(project.sourceSets.getByName("integrationTest").resources.srcDirs)
     }
 }
 
@@ -85,6 +74,15 @@ testing {
         }
 
         val integrationTest by registering(JvmTestSuite::class) {
+            testType.set(TestSuiteType.INTEGRATION_TEST)
+            sources {
+                java {
+                    setSrcDirs(listOf("src/integrationTest/java"))
+                }
+                resources {
+                    setSrcDirs(listOf("src/integrationTest/resources"))
+                }
+            }
             dependencies {
                 implementation(project())
                 implementation(project.dependencies.platform("org.springframework.boot:spring-boot-dependencies:3.3.3"))
