@@ -25,8 +25,8 @@ repositories {
 
 idea {
     module {
-        testSources.from(project.sourceSets.getByName("integrationTest").java.srcDirs)
-        testResources.from(project.sourceSets.getByName("integrationTest").resources.srcDirs)
+        testSources.from(file("src/integrationTest/java"))
+        testResources.from(file("src/integrationTest/resources"))
     }
 }
 
