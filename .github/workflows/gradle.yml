@@ -5,7 +5,7 @@
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
-name: Java CI with Gradle
+name: Main CI Pipelines
 
 on:
   push:
@@ -18,7 +18,8 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
 
     steps:
     - uses: actions/checkout@v4
@@ -32,6 +33,8 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+      with:
+        gradle-version: '8.10.1'
 
     - name: Build with Gradle Wrapper
       run: ./gradlew build
@@ -46,6 +49,18 @@ jobs:
     #
     # - name: Build with Gradle 8.9
     #   run: gradle build
+    - name: Run Coverage
+      run: ./gradlew jacocoTestReport
+
+    - name: Add coverage to PR
+      id: jacoco
+      uses: madrapps/jacoco-report@v1.7.1
+      with:
+        paths: |
+          ${{ github.workspace }}/**/build/reports/jacoco/jacoco/jacocoTestReport.xml,
+        token: ${{ secrets.GITHUB_TOKEN }}
+        min-coverage-overall: 60
+        min-coverage-changed-files: 70
 
   dependency-submission:
 
