@@ -18,6 +18,7 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
+      checks: write
       contents: write
       pull-requests: write
 
@@ -36,31 +37,46 @@ jobs:
       with:
         gradle-version: '8.10.1'
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
+    - name: Build and Test with Gradle Wrapper
+      run: ./gradlew build jacocoTestReport --info
 
-    # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-    # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
-    #
-    # - name: Setup Gradle
-    #   uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-    #   with:
-    #     gradle-version: '8.9'
-    #
-    # - name: Build with Gradle 8.9
-    #   run: gradle build
-    - name: Run Coverage
-      run: ./gradlew jacocoTestReport
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: Test Results
+        path: |
+          **/build/test-results/**/*.xml
+          **/build/reports/tests/test/**
+          **/build/reports/tests/integrationTest/**
 
-    - name: Add coverage to PR
-      id: jacoco
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: "**/build/test-results/**/*.xml"
+
+    - name: Generate JaCoCo Badge
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        generate-branches-badge: true
+        jacoco-csv-file: build/reports/jacoco/test/jacocoTestReport.csv
+
+    - name: Add Coverage PR Comment
       uses: madrapps/jacoco-report@v1.7.1
       with:
         paths: ${{ github.workspace }}/**/build/reports/jacoco/test/jacocoTestReport.xml
         token: ${{ secrets.GITHUB_TOKEN }}
         min-coverage-overall: 80
         min-coverage-changed-files: 80
+        title: Code Coverage Report
         update-comment: true
+
+    - name: Upload JaCoCo coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: jacoco-report
+        path: build/reports/jacoco/
 
   dependency-submission:
 
