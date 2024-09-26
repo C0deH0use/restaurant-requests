@@ -23,19 +23,23 @@ repositories {
     mavenCentral()
 }
 
-//sourceSets {
-//    create("integrationTest") {
-//        java {
-//            setSrcDirs(listOf("src/integrationTest"))
-//        }
-//    }
-//}
+sourceSets {
+    create("integrationTest") {
+        java {
+            setSrcDirs(listOf("src/integrationTest/java"))
+        }
+        resources {
+            setSrcDirs(listOf("src/integrationTest/resources"))
+        }
+    }
+}
 
-//idea {
-//    module {
-//        testSources.from(sourceSets["integrationTest"].java.srcDirs)
-//    }
-//}
+idea {
+    module {
+        testSources.from(sourceSets["integrationTest"].java.srcDirs)
+        testResources.from(sourceSets["integrationTest"].resources.srcDirs)
+    }
+}
 
 dependencies {
     runtimeOnly("org.postgresql:postgresql")
@@ -108,6 +112,10 @@ tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("cucumber.junit-platform.naming-strategy", "long")
     finalizedBy(tasks.jacocoTestReport)
+    
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
 
 tasks.named<Test>("integrationTest") {
@@ -140,4 +148,7 @@ tasks.register("parallelTests") {
     doFirst {
         println("Running all test suites in parallel")
     }
+    maxParallelForks = (Runtime.getRuntime().availableProcessors()).coerceAtLeast(1)
+    setForkEvery(100)
+    reports.html.required.set(true)
 }
