@@ -5,6 +5,7 @@ plugins {
     idea
     jacoco
     `jvm-test-suite`
+    `jacoco-report-aggregation`
     id("org.springframework.boot") version "3.3.3"
     id("io.spring.dependency-management") version "1.1.6"
 }
@@ -116,6 +117,7 @@ tasks.named<Test>("integrationTest") {
 }
 
 tasks.named("check") {
+    dependsOn(testing.suites.named("test"))
     dependsOn(testing.suites.named("integrationTest"))
 }
 
