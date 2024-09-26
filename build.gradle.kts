@@ -148,7 +148,10 @@ tasks.register("parallelTests") {
     doFirst {
         println("Running all test suites in parallel")
     }
-    maxParallelForks = (Runtime.getRuntime().availableProcessors()).coerceAtLeast(1)
+}
+
+tasks.withType<Test>().configureEach {
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
     setForkEvery(100)
     reports.html.required.set(true)
 }
