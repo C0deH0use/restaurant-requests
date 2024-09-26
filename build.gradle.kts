@@ -114,6 +114,7 @@ tasks.named<Test>("integrationTest") {
     systemProperty("cucumber.junit-platform.naming-strategy", "long")
     finalizedBy(tasks.jacocoTestReport)
 }
+
 tasks.named("check") {
     dependsOn(testing.suites.named("integrationTest"))
 }
@@ -121,7 +122,7 @@ tasks.named("check") {
 tasks.jacocoTestReport {
     reports {
         xml.required = true
-        csv.required = false
+        csv.required = true
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
 }
