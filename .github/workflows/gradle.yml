@@ -42,25 +42,46 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: Test Results
+        name: Unit Test Results
+        comment_mode: always
         path: |
-          **/build/test-results/**/*.xml
           **/build/reports/tests/test/**
+          **/build/test-results/tests/*.xml
+
+    - name: Upload IntegrationTest Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-results
+        retention-days: 2 day
+        path: |
+          **/build/test-results/integrationTest/*.xml
           **/build/reports/tests/integrationTest/**
 
-    - name: Publish Test Results
+    - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
-        files: "**/build/test-results/**/*.xml"
+        check_name: unit-test-results
+        comment_mode: always
+        retention-days: 2 day
+        files: "**/build/test-results/test/*.xml"
+
+    - name: Publish Integration Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        check_name: Integration Tests Results
+        comment_mode: always
+        files: "**/build/test-results/integrationTest/*.xml"
 
     - name: Generate JaCoCo Badge
       uses: cicirello/jacoco-badge-generator@v2
       with:
-        generate-branches-badge: true
         jacoco-csv-file: build/reports/jacoco/test/jacocoTestReport.csv
+        generate-branches-badge: true
 
     - name: Add Coverage PR Comment
       uses: madrapps/jacoco-report@v1.7.1
