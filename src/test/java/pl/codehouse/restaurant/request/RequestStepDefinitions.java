@@ -22,6 +22,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static pl.codehouse.restaurant.request.RequestMenuItemEntityBuilder.aMenuItemsRequest;
+import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aMenuItemRequestPayload;
 
 public class RequestStepDefinitions {
     private static final int REQUEST_ID = 1;
@@ -37,33 +39,63 @@ public class RequestStepDefinitions {
 
     private final RequestMenuItemRepository requestMenuItemRepository = Mockito.mock(RequestMenuItemRepository.class);
 
-    private final RequestCreationCommand command = new RequestCreationCommand(repository, menuItemRepository, requestMenuItemRepository);
+    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository);
 
     private Context<RequestPayload> context;
 
     private Mono<ExecutionResult<RequestDto>> result;
 
     private RequestDto expectedRequest;
-    private final MenuItemEntity item1 = new MenuItemEntity(MENU_ITEM_1, "Item 1", 1020, 1, false);
-    private final MenuItemEntity item2 = new MenuItemEntity(MENU_ITEM_2, "Item 2", 1650, 1, false);
+    private final MenuItemEntity item1 = new MenuItemEntity(MENU_ITEM_1, "Item 1", 1020, 1, false, false);
+    private final MenuItemEntity item2 = new MenuItemEntity(MENU_ITEM_2, "Item 2", 1650, 1, false, false);
 
     private final RequestEntity requestEntity = new RequestEntity(REQUEST_ID, CUSTOMER_ID_1);
 
     @Given("customer requests known menu items")
     public void customerRequestsKnownMenuItems() {
-        expectedRequest = RequestDto.from(requestEntity, List.of(item1, item2));
+        RequestPayload requestPayload = new RequestPayload(List.of(
+                aMenuItemRequestPayload()
+                        .withMenuId(MENU_ITEM_1)
+                        .withQuantity(1)
+                        .build(),
+                aMenuItemRequestPayload()
+                        .withMenuId(MENU_ITEM_2)
+                        .withQuantity(1)
+                        .build()
+        ), CUSTOMER_ID_1);
 
-        RequestPayload requestPayload = new RequestPayload(List.of(MENU_ITEM_1, MENU_ITEM_2), CUSTOMER_ID_1);
+        List<RequestMenuItemEntity> requestMenuItems = List.of(
+                aMenuItemsRequest()
+                        .withMenuId(MENU_ITEM_1)
+                        .withQuantity(1)
+                        .build(),
+                aMenuItemsRequest()
+                        .withMenuId(MENU_ITEM_2)
+                        .withQuantity(1)
+                        .build()
+        );
+
         context = new Context<>(requestPayload);
 
         given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(item1, item2));
         given(repository.save(any(RequestEntity.class))).willReturn(Mono.just(requestEntity));
-        given(requestMenuItemRepository.saveAll(anyList())).willReturn(Flux.just());
+        given(requestMenuItemRepository.saveAll(anyList())).willReturn(Flux.fromIterable(requestMenuItems));
+
+        expectedRequest = RequestDto.from(requestEntity, requestMenuItems, List.of(item1,item2));
     }
 
     @Given("customer requests any of the menu items not being known to the restaurant")
     public void customerRequestsAnyOfTheMenuItemsNotBeingKnownToTheRestaurant() {
-        RequestPayload requestPayload = new RequestPayload(List.of(MENU_ITEM_1, UNKNOWN_MENU_ITEM_3), CUSTOMER_ID_1);
+        RequestPayload requestPayload = new RequestPayload(List.of(
+                aMenuItemRequestPayload()
+                        .withMenuId(MENU_ITEM_1)
+                        .withQuantity(1)
+                        .build(),
+                aMenuItemRequestPayload()
+                        .withMenuId(UNKNOWN_MENU_ITEM_3)
+                        .withQuantity(1)
+                        .build()
+        ), CUSTOMER_ID_1);
         context = new Context<>(requestPayload);
 
         given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(item1));

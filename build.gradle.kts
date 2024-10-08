@@ -12,6 +12,9 @@ plugins {
 
 group = "pl.codehouse.restaurant"
 version = "0.0.1-SNAPSHOT"
+val junitVersion = "5.11.2"
+val junitPlatformVersion = "1.11.2"
+val cucumberVersion = "7.11.1"
 
 java {
     toolchain {
@@ -46,13 +49,15 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
+    implementation("org.apache.commons:commons-lang3:3.17.0")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
 
 testing {
     suites {
         withType<JvmTestSuite> {
-            useJUnitJupiter()
+            useJUnitJupiter(junitVersion)
             dependencies {
                 implementation("io.projectreactor:reactor-test")
 
@@ -61,15 +66,15 @@ testing {
                 implementation("org.springframework.boot:spring-boot-starter-data-jpa")
                 implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
 
-                implementation("org.junit.jupiter:junit-jupiter:5.11.0")
-                implementation("org.junit.platform:junit-platform-suite:1.11.0")
+                implementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+                implementation("org.junit.platform:junit-platform-suite:$junitPlatformVersion")
 
-                implementation("io.cucumber:cucumber-java:7.18.1")
-                implementation("io.cucumber:cucumber-junit:7.18.1")
-                implementation("io.cucumber:cucumber-spring:7.18.1")
-                implementation("io.cucumber:cucumber-junit-platform-engine:7.18.1")
+                implementation("io.cucumber:cucumber-java:$cucumberVersion")
+                implementation("io.cucumber:cucumber-junit:$cucumberVersion")
+                implementation("io.cucumber:cucumber-spring:$cucumberVersion")
+                implementation("io.cucumber:cucumber-junit-platform-engine:$cucumberVersion")
 
-                runtimeOnly("org.junit.platform:junit-platform-launcher:1.11.0")
+                runtimeOnly("org.junit.platform:junit-platform-launcher:$junitPlatformVersion")
             }
         }
 
@@ -133,11 +138,6 @@ tasks.jacocoTestReport {
         csv.required = true
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
-}
-
-// Configure parallel test execution
-tasks.withType<Test>().configureEach {
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
 }
 
 // Run test suites in parallel

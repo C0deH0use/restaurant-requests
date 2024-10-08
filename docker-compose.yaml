@@ -3,14 +3,6 @@ version: "3.8"
 name: restaurant-ordering-services
 
 services:
-  #  restaurant-orders:
-  #    build:
-  #      context: .
-  #      dockerfile: Dockerfile
-  #    platform: linux/amd64
-  #    ports:
-  #      - "8080:8080"
-
   restaurant-requests-db:
     image: postgres:latest
     container_name: restaurant-requests-db
