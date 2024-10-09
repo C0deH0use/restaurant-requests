@@ -1,5 +1,3 @@
-import org.gradle.internal.classpath.Instrumented.systemProperty
-
 plugins {
     java
     idea
@@ -82,7 +80,7 @@ testing {
             testType.set(TestSuiteType.INTEGRATION_TEST)
             sources {
                 java {
-                    setSrcDirs(listOf("src/integrationTest/java"))
+                    setSrcDirs(listOf("src/integrationTest/java", "src/test/java"))
                 }
                 resources {
                     setSrcDirs(listOf("src/integrationTest/resources"))
@@ -115,7 +113,7 @@ tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("cucumber.junit-platform.naming-strategy", "long")
     finalizedBy(tasks.jacocoTestReport)
-    
+
     testLogging {
         events("passed", "skipped", "failed")
     }
