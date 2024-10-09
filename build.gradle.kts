@@ -26,8 +26,8 @@ repositories {
 
 idea {
     module {
-        testSources.from(file("src/integrationTest/java"))
-        testResources.from(file("src/integrationTest/resources"))
+        testSources.from(file("src/integrationTest/java"), file("src/test/java"))
+        testResources.from(file("src/integrationTest/resources"), file("src/test/resources"))
     }
 }
 
@@ -83,7 +83,14 @@ testing {
                     setSrcDirs(listOf("src/integrationTest/java", "src/test/java"))
                 }
                 resources {
-                    setSrcDirs(listOf("src/integrationTest/resources"))
+                    setSrcDirs(listOf("src/integrationTest/resources", "src/test/resources"))
+                }
+            }
+            targets {
+                all {
+                    testTask.configure {
+                        shouldRunAfter(test)
+                    }
                 }
             }
             dependencies {
