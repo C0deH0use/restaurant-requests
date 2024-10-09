@@ -26,9 +26,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static pl.codehouse.restaurant.request.RequestDtoBuilder.REQUEST_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
 import static pl.codehouse.restaurant.request.RequestDtoBuilder.aRequestDto;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_1;
+import static pl.codehouse.restaurant.request.RequestEntityBuilder.REQUEST_ID;
 import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aMenuItemsRequest;
 import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemOne;
 
@@ -49,7 +49,7 @@ public class PackingCommandStepDefinitions {
         totalItems = totalMenuItems;
         var requestMenuItems = IntStream.range(0, totalMenuItems)
                 .mapToObj(i -> aMenuItemsRequest()
-                        .withMenuId(MENU_ITEM_1 + i)
+                        .withMenuId(MENU_ITEM_1_ID + i)
                         .withMenuItemName(MENU_ITEM_1_NAME + i)
                         .withQuantity(1)
                         .build()
@@ -130,7 +130,7 @@ public class PackingCommandStepDefinitions {
     public void and_RequestedMenuItemsWhereUpdatedByX(int updatedCollectedItems, int itemsTakenFromShelf) {
         then(requestService).should(times(updatedCollectedItems)).updateCollectedItems(updatePreparedMenuItemsDtoArgumentCaptor.capture());
 
-        List<Integer> collectedMenuItemIds = IntStream.range(0, collectedItems).mapToObj(i -> RequestMenuItemBuilder.MENU_ITEM_1 + i).toList();
+        List<Integer> collectedMenuItemIds = IntStream.range(0, collectedItems).mapToObj(i -> MENU_ITEM_1_ID + i).toList();
         List<UpdatePreparedMenuItemsDto> capturedValues = updatePreparedMenuItemsDtoArgumentCaptor.getAllValues();
         assertThat(capturedValues)
                 .hasSize(collectedItems)

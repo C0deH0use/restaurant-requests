@@ -1,32 +1,42 @@
 package pl.codehouse.restaurant.request;
 
-import static pl.codehouse.restaurant.request.RequestDtoBuilder.REQUEST_ID;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_1;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_2;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_ID;
+import static pl.codehouse.restaurant.request.RequestEntityBuilder.REQUEST_ID;
 
 public class RequestMenuItemEntityBuilder {
+    public static final int REQUEST_MENU_ITEM_1_ID = 10101;
+    public static final int REQUEST_MENU_ITEM_2_ID = 10201;
     private RequestMenuItemEntityBuilder() {
+        id = REQUEST_MENU_ITEM_1_ID;
         requestId = REQUEST_ID;
-        menuId = MENU_ITEM_1;
+        menuId = MENU_ITEM_1_ID;
         quantity = 1;
         prepared = 0;
         immediate = false;
     }
 
-    private Integer requestId, menuId, quantity, prepared;
+    private Integer id, requestId, menuId, quantity, prepared;
     private boolean immediate;
 
-    public static RequestMenuItemEntityBuilder aMenuItemsRequest() {
+    public static RequestMenuItemEntityBuilder aRequestMenuItems() {
         return new RequestMenuItemEntityBuilder();
     }
 
-    public static RequestMenuItemEntityBuilder aMenuItemRequestOne() {
-        return aMenuItemsRequest()
-                .withMenuId(MENU_ITEM_1);
+    public static RequestMenuItemEntityBuilder aRequestMenuItemEntityOne() {
+        return aRequestMenuItems()
+                .withId(REQUEST_MENU_ITEM_1_ID)
+                .withMenuId(MENU_ITEM_1_ID);
     }
-    public static RequestMenuItemEntityBuilder aMenuItemRequestTwo() {
-        return aMenuItemsRequest()
-                .withMenuId(MENU_ITEM_2);
+    public static RequestMenuItemEntityBuilder aRequestMenuItemEntityTwo() {
+        return aRequestMenuItems()
+                .withId(REQUEST_MENU_ITEM_2_ID)
+                .withMenuId(MENU_ITEM_2_ID);
+    }
+
+    public RequestMenuItemEntityBuilder withId(Integer id) {
+        this.id = id;
+        return this;
     }
 
     public RequestMenuItemEntityBuilder withRequestId(Integer requestId) {
@@ -55,6 +65,6 @@ public class RequestMenuItemEntityBuilder {
     }
 
     public RequestMenuItemEntity build() {
-        return new RequestMenuItemEntity(requestId, menuId, quantity, prepared, immediate);
+        return new RequestMenuItemEntity(id, requestId, menuId, quantity, prepared, immediate);
     }
 }

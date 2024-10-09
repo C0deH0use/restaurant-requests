@@ -27,7 +27,7 @@ public record RequestDto(
                     .filter(entity -> entity.id() == item.menuItemId())
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Menu item not found"));
-            return RequestMenuItem.from(menuItem.id(), menuItem.name(), item.quantity(), item.prepared(), item.immediate());
+            return RequestMenuItem.from(item.id(), menuItem.id(), menuItem.name(), item.quantity(), item.prepared(), item.immediate());
         };
     }
 

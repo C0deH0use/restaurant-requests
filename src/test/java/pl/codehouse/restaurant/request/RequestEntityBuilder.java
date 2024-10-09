@@ -1,9 +1,9 @@
 package pl.codehouse.restaurant.request;
 
-import static pl.codehouse.restaurant.request.RequestDtoBuilder.CUSTOMER_ID;
-import static pl.codehouse.restaurant.request.RequestDtoBuilder.REQUEST_ID;
-
 public class RequestEntityBuilder {
+    public static final int REQUEST_ID = 1111;
+    public static final int CUSTOMER_ID = 1201;
+
     private int id = REQUEST_ID;
     private int customerId = CUSTOMER_ID;
 

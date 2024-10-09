@@ -3,8 +3,12 @@ package pl.codehouse.restaurant.request;
 public class MenuItemEntityBuilder {
     public static final int MENU_ITEM_1_ID = 10001;
     public static final int MENU_ITEM_2_ID = 10002;
+    public static final int MENU_ITEM_3_ID = 10003;
+    public static final int MENU_ITEM_4_ID = 10004;
     public static final String MENU_ITEM_1_NAME = "Pizza Margherita";
     public static final String MENU_ITEM_2_NAME = "Spaghetti Carbonara";
+    public static final String MENU_ITEM_3_NAME = "Pizza Diavolo";
+    public static final String MENU_ITEM_4_NAME = "Cezar Salate";
 
     private int id;
     private String name;
@@ -37,6 +41,21 @@ public class MenuItemEntityBuilder {
                 .withId(MENU_ITEM_2_ID)
                 .withName(MENU_ITEM_2_NAME)
                 .withPrice(1200); // 12.00 in cents
+    }
+
+    public static MenuItemEntityBuilder aMenuItemEntityThree() {
+        return aMenuItemEntity()
+                .withId(MENU_ITEM_3_ID)
+                .withName(MENU_ITEM_3_NAME)
+                .withPrice(1900); // 12.00 in cents
+    }
+
+    public static MenuItemEntityBuilder aMenuItemEntityFour() {
+        return aMenuItemEntity()
+                .withId(MENU_ITEM_4_ID)
+                .withName(MENU_ITEM_4_NAME)
+                .withPrice(1300)
+                .withImmediate(); // 12.00 in cents
     }
 
     public MenuItemEntityBuilder withId(int id) {

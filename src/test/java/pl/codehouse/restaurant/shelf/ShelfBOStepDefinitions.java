@@ -9,6 +9,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import pl.codehouse.restaurant.request.RequestMenuItem;
+import pl.codehouse.restaurant.request.RequestMenuItemBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -23,10 +24,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_1;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_1_NAME;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_2;
-import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.MENU_ITEM_2_NAME;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_NAME;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_NAME;
+import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemOne;
+import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemTwo;
 import static pl.codehouse.restaurant.shelf.ShelfBuilder.aShelf;
 
 public class ShelfBOStepDefinitions {
@@ -46,9 +49,9 @@ public class ShelfBOStepDefinitions {
     public void given_ShelfContainsXMenuItemsFromRequest(int shelfItems) {
         given(shelfRepository.save(any())).willReturn(Mono.just(aShelf().build()));
 
-        given(shelfRepository.findByMenuItemId(MENU_ITEM_1)).willReturn(Mono.just(aShelf()
+        given(shelfRepository.findByMenuItemId(MENU_ITEM_1_ID)).willReturn(Mono.just(aShelf()
                 .aShelfWithAvailableMenuItems()
-                .withMenuId(MENU_ITEM_1)
+                .withMenuId(MENU_ITEM_1_ID)
                 .withName(MENU_ITEM_1_NAME)
                 .withItemsRemaining(shelfItems)
                 .build()
@@ -59,17 +62,17 @@ public class ShelfBOStepDefinitions {
     @Given("shelf not containing any items")
     public void shelfNotContainingAnyItems() {
         given(shelfRepository.save(any())).willReturn(Mono.just(aShelf().build()));
-        given(shelfRepository.findByMenuItemId(MENU_ITEM_2)).willReturn(Mono.empty());
+        given(shelfRepository.findByMenuItemId(MENU_ITEM_2_ID)).willReturn(Mono.empty());
     }
 
     @When("handling requested {int} Menu Items")
     public void when_RequestWithXMenuItems(int menuItemsRequested) {
-        executionResult = sut.take(new RequestMenuItem(MENU_ITEM_1, MENU_ITEM_1_NAME, menuItemsRequested, 0, false));
+        executionResult = sut.take(aRequestMenuItemOne().withQuantity(menuItemsRequested).build());
     }
 
     @When("request a new Menu Item")
     public void requestANewMenuItem() {
-        executionResult = sut.take(new RequestMenuItem(MENU_ITEM_2, MENU_ITEM_2_NAME, 1, 0, false));
+        executionResult = sut.take(aRequestMenuItemTwo().withQuantity(1).build());
     }
 
     @Then("request should be updated with {int} prepared menu items from the shelf")
@@ -84,7 +87,7 @@ public class ShelfBOStepDefinitions {
         then(shelfRepository).should(times(1)).save(shelfEntityArgumentCaptor.capture());
 
         assertThat(shelfEntityArgumentCaptor.getValue())
-                .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_2)
+                .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_2_ID)
                 .hasFieldOrPropertyWithValue("itemName", MENU_ITEM_2_NAME)
                 .hasFieldOrPropertyWithValue("quantity", arg0)
                 .hasFieldOrPropertyWithValue("version", NEW_VERSION_VALUE)
@@ -96,7 +99,7 @@ public class ShelfBOStepDefinitions {
         then(shelfRepository).should(times(1)).save(shelfEntityArgumentCaptor.capture());
 
         assertThat(shelfEntityArgumentCaptor.getValue())
-                .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_1)
+                .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_1_ID)
                 .hasFieldOrPropertyWithValue("itemName", MENU_ITEM_1_NAME)
                 .hasFieldOrPropertyWithValue("quantity", collectedItems)
                 .hasFieldOrPropertyWithValue("version", expectedVersion)

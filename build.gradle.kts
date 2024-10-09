@@ -80,21 +80,16 @@ testing {
             testType.set(TestSuiteType.INTEGRATION_TEST)
             sources {
                 java {
-                    setSrcDirs(listOf("src/integrationTest/java", "src/test/java"))
+                    setSrcDirs(listOf("src/integrationTest/java"))
                 }
                 resources {
                     setSrcDirs(listOf("src/integrationTest/resources", "src/test/resources"))
                 }
             }
-            targets {
-                all {
-                    testTask.configure {
-                        shouldRunAfter(test)
-                    }
-                }
-            }
             dependencies {
                 implementation(project())
+                implementation(sourceSets.test.get().output)
+                implementation(sourceSets.test.get().runtimeClasspath)
                 implementation(project.dependencies.platform("org.springframework.boot:spring-boot-dependencies:3.3.3"))
 
                 implementation("org.flywaydb:flyway-core")

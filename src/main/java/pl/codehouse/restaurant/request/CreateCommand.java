@@ -72,7 +72,7 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
                     .findFirst()
                     .map(RequestedMenuItemsPayload::quantity)
                     .orElseThrow(() -> new ResourceNotFoundException("Unable to match Menu Item by Id: " + menuItem.id(), ResourceType.MENU_ITEM));
-            return new RequestMenuItemEntity(savedOrderEntity.id(), menuItem.id(), menuItemQuantity, 0, menuItem.immediate());
+            return RequestMenuItemEntity.newInstance(savedOrderEntity.id(), menuItem.id(), menuItemQuantity, menuItem.immediate());
         };
     }
 }

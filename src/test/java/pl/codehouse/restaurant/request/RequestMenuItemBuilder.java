@@ -1,21 +1,25 @@
 
 package pl.codehouse.restaurant.request;
 
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_NAME;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_NAME;
+import static pl.codehouse.restaurant.request.RequestMenuItemEntityBuilder.REQUEST_MENU_ITEM_1_ID;
+import static pl.codehouse.restaurant.request.RequestMenuItemEntityBuilder.REQUEST_MENU_ITEM_2_ID;
+
 public class RequestMenuItemBuilder {
-    public static final int MENU_ITEM_1 = 10001;
-    public static final String MENU_ITEM_1_NAME = "Default MenuItem 1";
-    public static final int MENU_ITEM_2 = 10012;
-    public static final String MENU_ITEM_2_NAME = "Default MenuItem 2";
 
     private RequestMenuItemBuilder() {
-        menuId = MENU_ITEM_1;
-        menuItemName = MENU_ITEM_1_NAME;
+        id = REQUEST_MENU_ITEM_1_ID;
+        menuId = MENU_ITEM_1_ID;
+        menuItemName = MENU_ITEM_2_NAME;
         quantity = 1;
         prepared = 0;
         immediate = false;
     }
 
-    private Integer menuId, quantity, prepared;
+    private Integer id, menuId, quantity, prepared;
     private String menuItemName;
     private boolean immediate;
 
@@ -25,14 +29,21 @@ public class RequestMenuItemBuilder {
 
     public static RequestMenuItemBuilder aRequestMenuItemOne() {
         return aMenuItemsRequest()
-                .withMenuId(MENU_ITEM_1)
+                .withId(REQUEST_MENU_ITEM_1_ID)
+                .withMenuId(MENU_ITEM_1_ID)
                 .withMenuItemName(MENU_ITEM_1_NAME);
     }
 
     public static RequestMenuItemBuilder aRequestMenuItemTwo() {
         return aMenuItemsRequest()
-                .withMenuId(MENU_ITEM_2)
+                .withId(REQUEST_MENU_ITEM_2_ID)
+                .withMenuId(MENU_ITEM_2_ID)
                 .withMenuItemName(MENU_ITEM_2_NAME);
+    }
+
+    public RequestMenuItemBuilder withId(Integer id) {
+        this.id = id;
+        return this;
     }
 
     public RequestMenuItemBuilder withMenuItemName(String menuItemName) {
@@ -61,6 +72,6 @@ public class RequestMenuItemBuilder {
     }
 
     public RequestMenuItem build() {
-        return new RequestMenuItem(menuId, menuItemName, quantity, prepared, immediate);
+        return new RequestMenuItem(id, menuId, menuItemName, quantity, prepared, immediate);
     }
 }

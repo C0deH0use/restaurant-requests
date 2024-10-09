@@ -3,13 +3,12 @@ package pl.codehouse.restaurant.request;
 import java.util.ArrayList;
 import java.util.List;
 
+import static pl.codehouse.restaurant.request.RequestEntityBuilder.CUSTOMER_ID;
+import static pl.codehouse.restaurant.request.RequestEntityBuilder.REQUEST_ID;
 import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemOne;
 import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemTwo;
 
 public class RequestDtoBuilder {
-    public static final int REQUEST_ID = 1111;
-    public static final int CUSTOMER_ID = 1201;
-
     private int requestId = REQUEST_ID;
     private int customerId = CUSTOMER_ID;
     private List<RequestMenuItem> menuItems = new ArrayList<>();
