@@ -14,6 +14,7 @@ record MenuItemEntity(
         @NotNull String name,
         @Min(1) long price,
         @Min(1) int volume,
-        boolean packing
+        boolean packing,
+        boolean immediate
 ) {
 }

@@ -4,4 +4,5 @@ public enum ResourceType {
     MENU_ITEM,
     ORDER,
     CUSTOMER,
+    SHELF_ITEM,
 }

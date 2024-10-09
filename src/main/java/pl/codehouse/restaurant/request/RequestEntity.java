@@ -11,4 +11,8 @@ record RequestEntity(
         @Id
         @GeneratedValue(strategy = GenerationType.SEQUENCE) int id,
         @Min(1) int customerId) {
+
+    public static RequestEntity newRequestFor(int customerId) {
+        return new RequestEntity(0, customerId);
+    }
 }

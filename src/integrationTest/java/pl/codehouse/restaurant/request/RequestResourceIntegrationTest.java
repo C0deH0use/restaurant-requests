@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import pl.codehouse.restaurant.TestcontainersConfiguration;
@@ -26,11 +27,12 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.flyway.cleanDisabled=false")
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ExtendWith(SpringExtension.class)
 @Import(TestcontainersConfiguration.class)
-public class RequestResourceIntegrationTest {
+class RequestResourceIntegrationTest {
     private static final int MENU_ITEM_1 = 101;
     private static final int MENU_ITEM_2 = 102;
 
@@ -50,8 +52,8 @@ public class RequestResourceIntegrationTest {
         flyway.clean();
         flyway.migrate();
         Flux.just(
-                        new MenuItemEntity(MENU_ITEM_1, "Item 1", 1020, 1, false),
-                        new MenuItemEntity(MENU_ITEM_2, "Item 2", 1650, 1, false))
+                        new MenuItemEntity(MENU_ITEM_1, "Item 1", 1020, 1, false, false),
+                        new MenuItemEntity(MENU_ITEM_2, "Item 2", 1650, 1, false, false))
                 .flatMap(o -> {
                     System.out.println("Inserting object: " + o.toString());
                     return entityTemplate.insert(o);
@@ -61,16 +63,22 @@ public class RequestResourceIntegrationTest {
     }
 
     @Test
-    @DisplayName("should create order successfully")
-    void should_create_order_when_request_is_valid() {
+    @DisplayName("should create request successfully")
+    void should_create_request_when_request_is_valid() {
         // Given
-        Map<String, Object> payload = Map.of("customerId", "1010", "menuItems", List.of(MENU_ITEM_1, MENU_ITEM_2));
+        Map<String, Object> payload = Map.of(
+                "customerId", "1010",
+                "menuItems", List.of(
+                        Map.of("menuId", MENU_ITEM_1, "quantity", 1),
+                        Map.of("menuId", MENU_ITEM_2, "quantity", 2)
+                ));
 
         // When & Then
         given()
                 .contentType(ContentType.JSON)
                 .body(payload)
 
+                .log().all(true)
                 .when()
                 .post("/request")
 
@@ -78,11 +86,15 @@ public class RequestResourceIntegrationTest {
                 .log().all(true)
                 .statusCode(201)
                 .contentType(ContentType.JSON)
-                .body("orderId", equalTo(1000))
+                .body("requestId", equalTo(1000))
                 .body("customerId", equalTo(1010))
                 .body("menuItems.size()", is(2))
-                .body("menuItems[0]", hasKey("menuId"))
-                .body("menuItems.name.flatten().flatten()", hasItems("Item 1", "Item 2"))
+                .body("menuItems[0]", hasKey("menuItemId"))
+                .body("menuItems[0]", hasKey("quantity"))
+                .body("menuItems[0]", hasKey("prepared"))
+                .body("menuItems[0]", hasKey("finished"))
+                .body("menuItems[0]", hasKey("immediatePreparation"))
+                .body("menuItems.menuItemName.flatten().flatten()", hasItems("Item 1", "Item 2"))
         ;
     }
 

@@ -22,12 +22,18 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_ID;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.aMenuItemEntityOne;
+import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.aMenuItemEntityTwo;
+import static pl.codehouse.restaurant.request.RequestMenuItemEntityBuilder.aRequestMenuItemEntityOne;
+import static pl.codehouse.restaurant.request.RequestMenuItemEntityBuilder.aRequestMenuItemEntityTwo;
+import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aMenuItemOneRequest;
+import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aMenuItemTwoRequest;
 
 public class RequestStepDefinitions {
     private static final int REQUEST_ID = 1;
     private static final int VALUE_REPRESENTING_NULL_ID = 0;
-    private static final int MENU_ITEM_1 = 10001;
-    private static final int MENU_ITEM_2 = 10002;
     private static final int UNKNOWN_MENU_ITEM_3 = 1002;
     private static final int CUSTOMER_ID_1 = 1001;
 
@@ -37,36 +43,46 @@ public class RequestStepDefinitions {
 
     private final RequestMenuItemRepository requestMenuItemRepository = Mockito.mock(RequestMenuItemRepository.class);
 
-    private final RequestCreationCommand command = new RequestCreationCommand(repository, menuItemRepository, requestMenuItemRepository);
+    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository);
 
     private Context<RequestPayload> context;
 
     private Mono<ExecutionResult<RequestDto>> result;
 
     private RequestDto expectedRequest;
-    private final MenuItemEntity item1 = new MenuItemEntity(MENU_ITEM_1, "Item 1", 1020, 1, false);
-    private final MenuItemEntity item2 = new MenuItemEntity(MENU_ITEM_2, "Item 2", 1650, 1, false);
 
     private final RequestEntity requestEntity = new RequestEntity(REQUEST_ID, CUSTOMER_ID_1);
 
     @Given("customer requests known menu items")
     public void customerRequestsKnownMenuItems() {
-        expectedRequest = RequestDto.from(requestEntity, List.of(item1, item2));
+        RequestPayload requestPayload = new RequestPayload(List.of(
+                aMenuItemOneRequest().build(),
+                aMenuItemTwoRequest().build()
+        ), CUSTOMER_ID_1);
 
-        RequestPayload requestPayload = new RequestPayload(List.of(MENU_ITEM_1, MENU_ITEM_2), CUSTOMER_ID_1);
+        List<RequestMenuItemEntity> requestMenuItems = List.of(
+                aRequestMenuItemEntityOne().build(),
+                aRequestMenuItemEntityTwo().build()
+        );
+
         context = new Context<>(requestPayload);
 
-        given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(item1, item2));
+        given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(aMenuItemEntityOne().build(), aMenuItemEntityTwo().build()));
         given(repository.save(any(RequestEntity.class))).willReturn(Mono.just(requestEntity));
-        given(requestMenuItemRepository.saveAll(anyList())).willReturn(Flux.just());
+        given(requestMenuItemRepository.saveAll(anyList())).willReturn(Flux.fromIterable(requestMenuItems));
+
+        expectedRequest = RequestDto.from(requestEntity, requestMenuItems, List.of(aMenuItemEntityOne().build(), aMenuItemEntityTwo().build()));
     }
 
     @Given("customer requests any of the menu items not being known to the restaurant")
     public void customerRequestsAnyOfTheMenuItemsNotBeingKnownToTheRestaurant() {
-        RequestPayload requestPayload = new RequestPayload(List.of(MENU_ITEM_1, UNKNOWN_MENU_ITEM_3), CUSTOMER_ID_1);
+        RequestPayload requestPayload = new RequestPayload(List.of(
+                aMenuItemOneRequest().build(),
+                aMenuItemTwoRequest().build()
+        ), CUSTOMER_ID_1);
         context = new Context<>(requestPayload);
 
-        given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(item1));
+        given(menuItemRepository.findAllById(anyList())).willReturn(Flux.just(aMenuItemEntityOne().build()));
     }
 
     @When("creating new request")
@@ -98,7 +114,7 @@ public class RequestStepDefinitions {
                 .hasSize(2)
                 .allSatisfy(requestMenuItemEntity -> assertThat(requestMenuItemEntity.requestId()).isEqualTo(REQUEST_ID))
                 .extracting(RequestMenuItemEntity::menuItemId)
-                .allSatisfy(menuItemId -> assertThat(List.of(MENU_ITEM_1, MENU_ITEM_2)).contains(menuItemId));
+                .allSatisfy(menuItemId -> assertThat(List.of(MENU_ITEM_1_ID, MENU_ITEM_2_ID)).contains(menuItemId));
     }
 
     @Then("no request is created")
