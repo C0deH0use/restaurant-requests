@@ -3,7 +3,7 @@ run:
 	docker compose up api
 
 run-db:
-	docker compose up restaurant-requests-db
+	docker compose up --force-recreate --renew-anon-volumes restaurant-requests-db
 
 
 destroy:
