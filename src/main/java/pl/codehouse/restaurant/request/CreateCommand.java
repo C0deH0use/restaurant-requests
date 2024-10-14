@@ -9,6 +9,7 @@ import pl.codehouse.restaurant.ExecutionResult;
 import pl.codehouse.restaurant.exceptions.ResourceNotFoundException;
 import pl.codehouse.restaurant.exceptions.ResourceType;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.List;
 import java.util.function.Function;
@@ -61,8 +62,13 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
                         LOGGER.info("Storing Request MenuItems: {}", requestMenuItemEntities);
                         return requestMenuItemRepository.saveAll(requestMenuItemEntities).collectList();
                     })
-                    .map(tuple2 -> RequestDto.from(tuple2.getT1(), tuple2.getT2(), selectedMenuItems));
+                    .doOnNext(this::emitNewRequestEvent)
+                    .map(tuple -> RequestDto.from(tuple.getT1(), tuple.getT2(), selectedMenuItems));
         };
+    }
+
+    private void emitNewRequestEvent(Tuple2<RequestEntity, List<RequestMenuItemEntity>> tuple) {
+        LOGGER.info("Emit event: new request stored {}", tuple.getT1());
     }
 
     private static Function<MenuItemEntity, RequestMenuItemEntity> createMenuItemEntity(RequestEntity savedOrderEntity, List<RequestedMenuItemsPayload> menuItems) {

@@ -140,14 +140,6 @@ tasks.jacocoTestReport {
     }
 }
 
-// Run test suites in parallel
-tasks.register("parallelTests") {
-    dependsOn(tasks.named("test"), tasks.named("integrationTest"))
-    doFirst {
-        println("Running all test suites in parallel")
-    }
-}
-
 tasks.withType<Test>().configureEach {
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
     setForkEvery(100)

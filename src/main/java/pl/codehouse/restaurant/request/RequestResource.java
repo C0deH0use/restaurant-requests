@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -39,6 +40,11 @@ class RequestResource {
     @ResponseStatus(HttpStatus.CREATED)
     Mono<RequestDto> createRequest(@PathVariable int requestId) {
         return requestService.findById(requestId);
+    }
+
+    @GetMapping
+    Flux<RequestDto> fetchActiveRequests() {
+        return requestService.fetchActive();
     }
 
     @GetMapping("/menu-items")

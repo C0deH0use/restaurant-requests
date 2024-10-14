@@ -34,7 +34,8 @@ class UpdatePrepairedMenuItemsCommand implements Command<UpdatePreparedMenuItems
                     logger.info("Checking Request Menu Item status -> {}", requestMenuItemEntities);
                     boolean allItemsCollected = requestMenuItemEntities.stream().allMatch(RequestMenuItemEntity::isFinished);
                     if (!allItemsCollected) {
-                        return Mono.just(PackingStatus.IN_PROGRESS);
+                        return requestRepository.updateStatusById(requestId, RequestStatus.IN_PROGRESS)
+                                .then().thenReturn(PackingStatus.IN_PROGRESS);
                     }
 
                     logger.info("All menu items are prepared, request {} ready to be collected", requestId);

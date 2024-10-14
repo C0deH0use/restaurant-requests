@@ -51,7 +51,7 @@ public class RequestStepDefinitions {
 
     private RequestDto expectedRequest;
 
-    private final RequestEntity requestEntity = new RequestEntity(REQUEST_ID, CUSTOMER_ID_1);
+    private final RequestEntity requestEntity = RequestEntityBuilder.aRequestEntity().build();
 
     @Given("customer requests known menu items")
     public void customerRequestsKnownMenuItems() {
