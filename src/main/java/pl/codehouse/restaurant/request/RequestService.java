@@ -7,5 +7,4 @@ public interface RequestService {
     Mono<RequestDto> updateCollectedItems(UpdatePreparedMenuItemsDto updateDto);
     Mono<RequestDto> findById(int requestId);
     Flux<RequestDto> fetchActive();
-
 }
