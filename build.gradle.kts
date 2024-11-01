@@ -10,9 +10,9 @@ plugins {
 
 group = "pl.codehouse.restaurant"
 version = "0.0.1-SNAPSHOT"
-val junitVersion = "5.11.2"
-val junitPlatformVersion = "1.11.2"
-val cucumberVersion = "7.11.1"
+val junitVersion = "5.10.2"
+val junitPlatformVersion = "1.10.2"
+val cucumberVersion = "7.15.0"
 
 java {
     toolchain {
@@ -47,7 +47,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
-    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
@@ -59,13 +59,17 @@ testing {
             dependencies {
                 implementation("io.projectreactor:reactor-test")
 
-                implementation("org.springframework.boot:spring-boot-starter-test")
+                implementation("org.springframework.boot:spring-boot-starter-test") {
+                    exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+                }
                 implementation("org.springframework.boot:spring-boot-starter-webflux")
                 implementation("org.springframework.boot:spring-boot-starter-data-jpa")
                 implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+                implementation("org.springframework.kafka:spring-kafka-test")
 
                 implementation("org.junit.jupiter:junit-jupiter:$junitVersion")
                 implementation("org.junit.platform:junit-platform-suite:$junitPlatformVersion")
+                implementation("org.junit.platform:junit-platform-launcher:$junitPlatformVersion")
 
                 implementation("io.cucumber:cucumber-java:$cucumberVersion")
                 implementation("io.cucumber:cucumber-junit:$cucumberVersion")
@@ -90,7 +94,7 @@ testing {
                 implementation(project())
                 implementation(sourceSets.test.get().output)
                 implementation(sourceSets.test.get().runtimeClasspath)
-                implementation(project.dependencies.platform("org.springframework.boot:spring-boot-dependencies:3.3.3"))
+                implementation(project.dependencies.platform("org.springframework.boot:spring-boot-dependencies:3.2.3"))
 
                 implementation("org.flywaydb:flyway-core")
                 implementation("org.flywaydb:flyway-database-postgresql")
@@ -102,10 +106,10 @@ testing {
                 implementation("org.testcontainers:postgresql")
                 implementation("org.testcontainers:r2dbc")
 
-                implementation("io.rest-assured:rest-assured:5.5.0")
-                implementation("io.rest-assured:json-path:5.5.0")
-                implementation("io.rest-assured:json-schema-validator:5.5.0")
-                implementation("io.rest-assured:spring-web-test-client:5.5.0")
+                implementation("io.rest-assured:rest-assured:5.4.0")
+                implementation("io.rest-assured:json-path:5.4.0")
+                implementation("io.rest-assured:json-schema-validator:5.4.0")
+                implementation("io.rest-assured:spring-web-test-client:5.4.0")
             }
         }
     }

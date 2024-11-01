@@ -76,11 +76,11 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
     }
 
     private void emitNewRequestEvent(Tuple2<RequestEntity, List<RequestMenuItemEntity>> tuple) {
-        LOGGER.info("Emit event: new request stored {}", tuple.getT1());
         Message<ShelfEventDto> message = new GenericMessage<>(
                 ShelfEventDto.newRequestEvent(tuple.getT1().id()),
                 shelfKafkaProperties.kafkaHeaders()
         );
+        LOGGER.info("Emit event: {} for the following request: {}", message.getPayload().eventType(), tuple.getT1());
         kafkaTemplate.send(message);
     }
 

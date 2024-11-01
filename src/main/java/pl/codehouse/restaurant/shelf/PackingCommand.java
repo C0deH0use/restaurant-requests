@@ -1,13 +1,15 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant.shelf;
 
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 import pl.codehouse.restaurant.Command;
 import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
-import pl.codehouse.restaurant.shelf.PackingStatus;
-import pl.codehouse.restaurant.shelf.ShelfBO;
-import pl.codehouse.restaurant.shelf.ShelfTakeResult;
+import pl.codehouse.restaurant.request.PackingActionResult;
+import pl.codehouse.restaurant.request.RequestDto;
+import pl.codehouse.restaurant.request.RequestMenuItem;
+import pl.codehouse.restaurant.request.RequestService;
+import pl.codehouse.restaurant.request.UpdatePreparedMenuItemsDto;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
