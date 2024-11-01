@@ -1,7 +1,13 @@
 package pl.codehouse.restaurant.request;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import io.restassured.module.webtestclient.RestAssuredWebTestClient;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.assertj.core.api.Assertions;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,16 +18,21 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.testcontainers.containers.KafkaContainer;
 import pl.codehouse.restaurant.TestcontainersConfiguration;
 import reactor.core.publisher.Flux;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.module.webtestclient.RestAssuredWebTestClient.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
@@ -45,6 +56,14 @@ class RequestResourceIntegrationTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    @Autowired
+    private KafkaContainer kafkaContainer;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private Consumer<Integer, String> consumerServiceTest;
+
     @BeforeEach
     void setUp() {
         RestAssuredWebTestClient.webTestClient(webTestClient);
@@ -60,6 +79,15 @@ class RequestResourceIntegrationTest {
                 })
                 .collectList()
                 .block();
+
+        Map<String, Object> testConsumerProps = KafkaTestUtils.consumerProps(
+                kafkaContainer.getBootstrapServers(),
+                "test-request_worker__clientId",
+                "false"
+        );
+        consumerServiceTest = new DefaultKafkaConsumerFactory<Integer, String>(testConsumerProps)
+                .createConsumer("request_worker__clientId");
+        consumerServiceTest.subscribe(Collections.singletonList("shelf-events"));
     }
 
     @Test
@@ -96,6 +124,16 @@ class RequestResourceIntegrationTest {
                 .body("menuItems[0]", hasKey("immediatePreparation"))
                 .body("menuItems.menuItemName.flatten().flatten()", hasItems("Item 1", "Item 2"))
         ;
+
+        ConsumerRecord<Integer, String> singleRecord = KafkaTestUtils.getSingleRecord(consumerServiceTest, "shelf-events");
+
+        assertThat(singleRecord.value()).isNotNull();
+        Map<String, Object> eventPayload = getEventPayload(singleRecord);
+        assertThat(eventPayload)
+                .containsKey("requestId")
+                .containsEntry("eventType", "NEW_REQUEST")
+                .containsEntry("menuItemId", -1)
+                .containsEntry("quantity", -1);
     }
 
     @Test
@@ -114,5 +152,13 @@ class RequestResourceIntegrationTest {
                 .contentType(ContentType.JSON)
                 .body("$.size()", is(2))
                 .body("name.flatten()", hasItems("Item 1", "Item 2"));
+    }
+
+    private Map<String, Object> getEventPayload(ConsumerRecord<Integer, String> singleRecord) {
+        try {
+            return objectMapper.readValue(singleRecord.value(), new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            return Assertions.fail("Unable to read Consumer Record and convert to Map<String,Object>", e);
+        }
     }
 }

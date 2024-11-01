@@ -1,2 +1,2 @@
-# restaurant-orders
-McBurger restaurant ordering service
+# restaurant-Requests
+McBurger restaurant Requests service

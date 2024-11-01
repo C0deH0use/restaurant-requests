@@ -5,10 +5,12 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.kafka.core.KafkaTemplate;
 import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
 import pl.codehouse.restaurant.exceptions.ResourceNotFoundException;
 import pl.codehouse.restaurant.exceptions.ResourceType;
+import pl.codehouse.restaurant.shelf.ShelfKafkaProperties;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -32,7 +34,7 @@ import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aM
 import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aMenuItemTwoRequest;
 
 public class RequestStepDefinitions {
-    private static final int REQUEST_ID = 1;
+    private static final int REQUEST_ID = 1100;
     private static final int VALUE_REPRESENTING_NULL_ID = 0;
     private static final int UNKNOWN_MENU_ITEM_3 = 1002;
     private static final int CUSTOMER_ID_1 = 1001;
@@ -43,7 +45,11 @@ public class RequestStepDefinitions {
 
     private final RequestMenuItemRepository requestMenuItemRepository = Mockito.mock(RequestMenuItemRepository.class);
 
-    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository);
+    private final ShelfKafkaProperties shelfKafkaProperties = Mockito.mock(ShelfKafkaProperties.class);
+
+    private final KafkaTemplate<String, ShelfEventDto> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
+
+    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository, shelfKafkaProperties, kafkaTemplate);
 
     private Context<RequestPayload> context;
 
@@ -51,7 +57,7 @@ public class RequestStepDefinitions {
 
     private RequestDto expectedRequest;
 
-    private final RequestEntity requestEntity = new RequestEntity(REQUEST_ID, CUSTOMER_ID_1);
+    private final RequestEntity requestEntity = RequestEntityBuilder.aRequestEntity().withId(REQUEST_ID).withCustomerId(CUSTOMER_ID_1).build();
 
     @Given("customer requests known menu items")
     public void customerRequestsKnownMenuItems() {

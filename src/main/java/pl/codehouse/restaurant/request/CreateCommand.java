@@ -1,6 +1,9 @@
 package pl.codehouse.restaurant.request;
 
 import org.slf4j.Logger;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import pl.codehouse.restaurant.Command;
@@ -8,7 +11,9 @@ import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
 import pl.codehouse.restaurant.exceptions.ResourceNotFoundException;
 import pl.codehouse.restaurant.exceptions.ResourceType;
+import pl.codehouse.restaurant.shelf.ShelfKafkaProperties;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.List;
 import java.util.function.Function;
@@ -21,11 +26,15 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
     private final RequestRepository repository;
     private final MenuItemRepository menuItemRepository;
     private final RequestMenuItemRepository requestMenuItemRepository;
+    private final ShelfKafkaProperties shelfKafkaProperties;
+    private final KafkaTemplate<String, ShelfEventDto> kafkaTemplate;
 
-    CreateCommand(RequestRepository repository, MenuItemRepository menuItemRepository, RequestMenuItemRepository requestMenuItemRepository) {
+    CreateCommand(RequestRepository repository, MenuItemRepository menuItemRepository, RequestMenuItemRepository requestMenuItemRepository, ShelfKafkaProperties shelfKafkaProperties, KafkaTemplate<String, ShelfEventDto> kafkaTemplate) {
         this.repository = repository;
         this.menuItemRepository = menuItemRepository;
         this.requestMenuItemRepository = requestMenuItemRepository;
+        this.shelfKafkaProperties = shelfKafkaProperties;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @Override
@@ -61,8 +70,18 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
                         LOGGER.info("Storing Request MenuItems: {}", requestMenuItemEntities);
                         return requestMenuItemRepository.saveAll(requestMenuItemEntities).collectList();
                     })
-                    .map(tuple2 -> RequestDto.from(tuple2.getT1(), tuple2.getT2(), selectedMenuItems));
+                    .doOnNext(this::emitNewRequestEvent)
+                    .map(tuple -> RequestDto.from(tuple.getT1(), tuple.getT2(), selectedMenuItems));
         };
+    }
+
+    private void emitNewRequestEvent(Tuple2<RequestEntity, List<RequestMenuItemEntity>> tuple) {
+        Message<ShelfEventDto> message = new GenericMessage<>(
+                ShelfEventDto.newRequestEvent(tuple.getT1().id()),
+                shelfKafkaProperties.kafkaHeaders()
+        );
+        LOGGER.info("Emit event: {} for the following request: {}", message.getPayload().eventType(), tuple.getT1());
+        kafkaTemplate.send(message);
     }
 
     private static Function<MenuItemEntity, RequestMenuItemEntity> createMenuItemEntity(RequestEntity savedOrderEntity, List<RequestedMenuItemsPayload> menuItems) {

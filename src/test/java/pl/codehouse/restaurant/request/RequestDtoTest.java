@@ -16,7 +16,7 @@ import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMen
 
 @DisplayName("Request DTO Tests")
 class RequestDtoTest {
-    private final RequestEntity entity = new RequestEntity(REQUEST_ID, CUSTOMER_ID);
+    private final RequestEntity entity = RequestEntityBuilder.aRequestEntity().build();
     private final MenuItemEntity item1 = new MenuItemEntity(MENU_ITEM_1_ID, "Item 1", 1020, 1, false, false);
     private final MenuItemEntity item2 = new MenuItemEntity(MENU_ITEM_2_ID, "Item 2", 1650, 1, false, false);
 

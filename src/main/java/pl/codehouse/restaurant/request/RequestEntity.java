@@ -10,9 +10,10 @@ import org.springframework.data.relational.core.mapping.Table;
 record RequestEntity(
         @Id
         @GeneratedValue(strategy = GenerationType.SEQUENCE) int id,
-        @Min(1) int customerId) {
+        @Min(1) int customerId,
+        RequestStatus status) {
 
     public static RequestEntity newRequestFor(int customerId) {
-        return new RequestEntity(0, customerId);
+        return new RequestEntity(0, customerId, RequestStatus.NEW);
     }
 }

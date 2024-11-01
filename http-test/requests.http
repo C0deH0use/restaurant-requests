@@ -1,0 +1,21 @@
+POST http://localhost:8080/request
+Content-Type: application/json
+
+{
+  "customerId": 1000,
+  "menuItems": [
+    {
+      "menuId": 1000,
+      "quantity": 2
+    }
+  ]
+}
+
+
+####
+GET http://localhost:8080/request
+Content-Type: application/json
+
+####
+GET http://localhost:8080/request/menu-items
+Content-Type: application/json

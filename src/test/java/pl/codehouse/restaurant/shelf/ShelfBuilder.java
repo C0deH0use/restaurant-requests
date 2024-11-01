@@ -16,6 +16,13 @@ class ShelfBuilder {
         return new ShelfBuilder();
     }
 
+    ShelfBuilder newShelfEntity() {
+        this.id = -1;
+        this.itemsRemaining = 5;
+        this.version = 1;
+        return this;
+    }
+
     ShelfBuilder aShelfWithAvailableMenuItems() {
         this.itemsRemaining = 5;
         this.version = 1;
@@ -34,6 +41,11 @@ class ShelfBuilder {
 
     ShelfBuilder withItemsRemaining(Integer itemsRemaining) {
         this.itemsRemaining = itemsRemaining;
+        return this;
+    }
+
+    ShelfBuilder withUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
         return this;
     }
 

@@ -5,6 +5,7 @@ public class RequestEntityBuilder {
     public static final int CUSTOMER_ID = 1201;
 
     private int id = REQUEST_ID;
+    private RequestStatus status = RequestStatus.IN_PROGRESS;
     private int customerId = CUSTOMER_ID;
 
     private RequestEntityBuilder() {
@@ -12,6 +13,11 @@ public class RequestEntityBuilder {
 
     public static RequestEntityBuilder aRequestEntity() {
         return new RequestEntityBuilder();
+    }
+
+    public static RequestEntityBuilder aRequestEntity(int requestId) {
+        return new RequestEntityBuilder()
+                .withId(requestId);
     }
 
     public RequestEntityBuilder withId(int id) {
@@ -24,7 +30,12 @@ public class RequestEntityBuilder {
         return this;
     }
 
+    public RequestEntityBuilder withStatus(RequestStatus status) {
+        this.status = status;
+        return this;
+    }
+
     public RequestEntity build() {
-        return new RequestEntity(id, customerId);
+        return new RequestEntity(id, customerId, status);
     }
 }

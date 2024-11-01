@@ -1,19 +1,20 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant.shelf;
 
 import io.cucumber.java.ParameterType;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.apache.commons.lang3.IntegerRange;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.ReturnsElementsOf;
 import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
-import pl.codehouse.restaurant.shelf.PackingStatus;
-import pl.codehouse.restaurant.shelf.ShelfBO;
-import pl.codehouse.restaurant.shelf.ShelfTakeResult;
+import pl.codehouse.restaurant.request.PackingActionResult;
+import pl.codehouse.restaurant.request.RequestDto;
+import pl.codehouse.restaurant.request.RequestService;
+import pl.codehouse.restaurant.request.RequestStatus;
+import pl.codehouse.restaurant.request.UpdatePreparedMenuItemsDto;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 

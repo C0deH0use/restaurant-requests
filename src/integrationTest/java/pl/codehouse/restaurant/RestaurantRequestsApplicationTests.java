@@ -1,12 +1,11 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import pl.codehouse.restaurant.TestcontainersConfiguration;
 
-@Import(TestcontainersConfiguration.class)
 @SpringBootTest
+@Import(TestcontainersConfiguration.class)
 class RestaurantRequestsApplicationTests {
 
     @Test
