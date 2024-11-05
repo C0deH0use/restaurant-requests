@@ -131,17 +131,24 @@ tasks.named<Test>("integrationTest") {
     finalizedBy(tasks.jacocoTestReport)
 }
 
-tasks.named("check") {
-    dependsOn(testing.suites.named("test"))
-    dependsOn(testing.suites.named("integrationTest"))
-}
-
 tasks.jacocoTestReport {
     reports {
         xml.required = true
         csv.required = true
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
+}
+
+tasks.withType<JacocoReport>().configureEach {
+    dependsOn(project.tasks.withType<Test>())
+    // execution data needs to be aggregated from all exec files in the project for multi jvm test suite testing
+    tasks.withType<Test>().forEach(::executionData) // confusing
+}
+
+tasks.withType<JacocoCoverageVerification>().configureEach {
+    dependsOn(project.tasks.withType<JacocoReport>())
+    // execution data needs to be aggregated from all exec files in the project for multi jvm test suite testing
+    executionData(project.tasks.withType<JacocoReport>().map { it.executionData })
 }
 
 tasks.withType<Test>().configureEach {
