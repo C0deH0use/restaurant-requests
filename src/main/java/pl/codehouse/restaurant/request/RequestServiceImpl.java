@@ -54,6 +54,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public Flux<RequestDto> fetchActive() {
         return requestRepository.findByStatus(ACTIVE_REQUEST_STATUSES)
+                .doOnComplete(() -> logger.info(">>.findByStatus({}) completed", ACTIVE_REQUEST_STATUSES))
                 .doOnNext(r -> logger.info("Fetching components of RequestDTO for {}, status: {}", r.id(), r.status()))
                 .flatMap(request -> requestMenuItemRepository.findByRequestId(request.id())
                         .collectList()
