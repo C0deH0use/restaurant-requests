@@ -26,7 +26,11 @@ class ShelfEventListener {
         packingCommand.execute(new Context<Integer>(event.requestId()))
                 .map(ExecutionResult::handle)
                 .doOnSuccess(result -> logger.info("Packing command for the following request:{} finished with the following:{}", event.requestId(), result))
-                .doOnError(error -> logger.error("Error while processing packing command for request: {}. Error:{}", event.requestId(), error.getMessage(), error))
+                .doOnError(error -> logger.error("Error while processing packing command for request: {}. Error:{}",
+                        event.requestId(),
+                        error.getMessage(),
+                        error)
+                )
                 .subscribe();
     }
 }

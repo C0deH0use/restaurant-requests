@@ -1,5 +1,7 @@
 package pl.codehouse.restaurant.request;
 
+import java.util.List;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
@@ -11,13 +13,16 @@ import pl.codehouse.restaurant.Context;
 import pl.codehouse.restaurant.ExecutionResult;
 import pl.codehouse.restaurant.exceptions.ResourceNotFoundException;
 import pl.codehouse.restaurant.exceptions.ResourceType;
+import pl.codehouse.restaurant.shelf.PackingStatus;
 import pl.codehouse.restaurant.shelf.ShelfKafkaProperties;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.List;
-import java.util.function.Function;
-
+/**
+ * Command for creating a new request in the restaurant system.
+ * This command handles the creation of a new request, including saving the request details,
+ * associated menu items, and emitting relevant events.
+ */
 @Component
 class CreateCommand implements Command<RequestPayload, RequestDto> {
 
@@ -26,15 +31,24 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
     private final RequestRepository repository;
     private final MenuItemRepository menuItemRepository;
     private final RequestMenuItemRepository requestMenuItemRepository;
-    private final ShelfKafkaProperties shelfKafkaProperties;
     private final KafkaTemplate<String, ShelfEventDto> kafkaTemplate;
+    private final ShelfKafkaProperties shelfKafkaProperties;
+    private final RequestStatusChangeKafkaProperties requestStatusChangeKafkaProperties;
 
-    CreateCommand(RequestRepository repository, MenuItemRepository menuItemRepository, RequestMenuItemRepository requestMenuItemRepository, ShelfKafkaProperties shelfKafkaProperties, KafkaTemplate<String, ShelfEventDto> kafkaTemplate) {
+    CreateCommand(
+            RequestRepository repository,
+            MenuItemRepository menuItemRepository,
+            RequestMenuItemRepository requestMenuItemRepository,
+            KafkaTemplate<String, ShelfEventDto> kafkaTemplate,
+            ShelfKafkaProperties shelfKafkaProperties,
+            RequestStatusChangeKafkaProperties requestStatusChangeKafkaProperties
+    ) {
         this.repository = repository;
         this.menuItemRepository = menuItemRepository;
         this.requestMenuItemRepository = requestMenuItemRepository;
-        this.shelfKafkaProperties = shelfKafkaProperties;
         this.kafkaTemplate = kafkaTemplate;
+        this.shelfKafkaProperties = shelfKafkaProperties;
+        this.requestStatusChangeKafkaProperties = requestStatusChangeKafkaProperties;
     }
 
     @Override
@@ -56,7 +70,9 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
             LOGGER.info("Validating customers new request menu items");
             List<RequestedMenuItemsPayload> requestedMenuItems = context.request().menuItems();
             if (selectedMenuItems.size() != requestedMenuItems.size()) {
-                LOGGER.error("Following items {} out of {} requested items are unknown", requestedMenuItems.size() - selectedMenuItems.size(), requestedMenuItems.size());
+                LOGGER.error("Following items {} out of {} requested items are unknown",
+                        requestedMenuItems.size() - selectedMenuItems.size(),
+                        requestedMenuItems.size());
                 return Mono.error(new ResourceNotFoundException(MISSING_ORDER_COMPONENTS_ERROR_MESSAGE, ResourceType.MENU_ITEM));
             }
 
@@ -76,15 +92,24 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
     }
 
     private void emitNewRequestEvent(Tuple2<RequestEntity, List<RequestMenuItemEntity>> tuple) {
-        Message<ShelfEventDto> message = new GenericMessage<>(
+        Message<ShelfEventDto> shelfMessage = new GenericMessage<>(
                 ShelfEventDto.newRequestEvent(tuple.getT1().id()),
                 shelfKafkaProperties.kafkaHeaders()
         );
-        LOGGER.info("Emit event: {} for the following request: {}", message.getPayload().eventType(), tuple.getT1());
-        kafkaTemplate.send(message);
+        Message<RequestStatusChangeMessage> requestStatusMessage = new GenericMessage<>(
+                new RequestStatusChangeMessage(tuple.getT1().id(), tuple.getT1().status(), PackingStatus.NOT_STARTED),
+                requestStatusChangeKafkaProperties.kafkaHeaders()
+        );
+        LOGGER.info("Emit event: {} for the following request: {}", shelfMessage.getPayload().eventType(), tuple.getT1());
+        kafkaTemplate.send(shelfMessage);
+
+        LOGGER.info("Emit event: {} for the following request: {}", requestStatusMessage.getPayload().getClass().getSimpleName(), tuple.getT1());
+        kafkaTemplate.send(requestStatusMessage);
     }
 
-    private static Function<MenuItemEntity, RequestMenuItemEntity> createMenuItemEntity(RequestEntity savedOrderEntity, List<RequestedMenuItemsPayload> menuItems) {
+    private static Function<MenuItemEntity, RequestMenuItemEntity> createMenuItemEntity(
+            RequestEntity savedOrderEntity,
+            List<RequestedMenuItemsPayload> menuItems) {
         return menuItem -> {
             int menuItemQuantity = menuItems.stream()
                     .filter(requestedMenuItem -> menuItem.id() == requestedMenuItem.menuId())

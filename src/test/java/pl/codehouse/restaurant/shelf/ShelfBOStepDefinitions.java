@@ -8,11 +8,8 @@ import io.cucumber.java.en.When;
 import org.apache.commons.lang3.BooleanUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import pl.codehouse.restaurant.request.RequestMenuItem;
-import pl.codehouse.restaurant.request.RequestMenuItemBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -40,7 +37,7 @@ public class ShelfBOStepDefinitions {
     private final ArgumentCaptor<ShelfEntity> shelfEntityArgumentCaptor = ArgumentCaptor.forClass(ShelfEntity.class);
     private final LocalDateTime updatedAt = LocalDateTime.now(clock);
 
-    private final ShelfBO sut = new ShelfBO(clock, shelfRepository);
+    private final ShelfBo sut = new ShelfBo(clock, shelfRepository);
     long expectedVersion = 2;
 
     private Mono<ShelfTakeResult> executionResult;
