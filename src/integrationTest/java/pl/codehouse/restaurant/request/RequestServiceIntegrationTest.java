@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,7 +63,12 @@ class RequestServiceIntegrationTest {
     void setUp() {
         flyway.clean();
         flyway.migrate();
-        getInitData()
+        getInitRequests()
+                .doOnNext(o -> System.out.println("Inserting object: " + o.toString()))
+                .flatMap(entityTemplate::insert)
+                .collectList()
+                .block();
+        getInitRequestMenuItems()
                 .doOnNext(o -> System.out.println("Inserting object: " + o.toString()))
                 .flatMap(entityTemplate::insert)
                 .collectList()
@@ -112,12 +116,6 @@ class RequestServiceIntegrationTest {
         assertThat(totalItemsCount.get()).isEqualTo(3);
     }
 
-    private static void assertExpectedRequestIds(RequestDto requestDto, LinkedList<Integer> expectedRecords, AtomicInteger totalItemsCount) {
-        assertThat(requestDto.requestId()).isIn(expectedRecords);
-        expectedRecords.removeIf(r -> r.equals(requestDto.requestId()));
-        totalItemsCount.getAndIncrement();
-    }
-
     @Test
     @DisplayName("should update request with packed values for a given Request Menu Item")
     void shouldUpdateRequestWithPackedValuesForAGivenMenuItem() {
@@ -145,14 +143,14 @@ class RequestServiceIntegrationTest {
                 .verifyComplete();
     }
 
-    private static @NotNull Flux<Record> getInitData() {
-        return Flux.just(
-                // Menu item entities
-                aMenuItemEntityOne().build(),
-                aMenuItemEntityTwo().build(),
-                aMenuItemEntityThree().build(),
-                aMenuItemEntityFour().build(),
+    private static void assertExpectedRequestIds(RequestDto requestDto, LinkedList<Integer> expectedRecords, AtomicInteger totalItemsCount) {
+        assertThat(requestDto.requestId()).isIn(expectedRecords);
+        expectedRecords.removeIf(r -> r.equals(requestDto.requestId()));
+        totalItemsCount.getAndIncrement();
+    }
 
+    private static @NotNull Flux<Record> getInitRequests() {
+        return Flux.just(
                 // request entity One
                 aRequestEntity().build(),
                 aRequestEntity(REQUEST_2_ID)
@@ -162,7 +160,17 @@ class RequestServiceIntegrationTest {
                         .build(),
                 aRequestEntity(REQUEST_4_ID)
                         .withStatus(RequestStatus.COLLECTED)
-                        .build(),
+                        .build()
+        );
+    }
+
+    private static @NotNull Flux<Record> getInitRequestMenuItems() {
+        return Flux.just(
+                // Menu item entities
+                aMenuItemEntityOne().build(),
+                aMenuItemEntityTwo().build(),
+                aMenuItemEntityThree().build(),
+                aMenuItemEntityFour().build(),
 
                 // Request 1: Menu Items - One & Two -> NEW
                 aRequestMenuItemEntityOne().build(),

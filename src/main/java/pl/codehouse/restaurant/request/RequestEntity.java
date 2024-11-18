@@ -13,7 +13,7 @@ record RequestEntity(
         @Min(1) int customerId,
         RequestStatus status) {
 
-    public static RequestEntity newRequestFor(int customerId) {
+    static RequestEntity newRequestFor(int customerId) {
         return new RequestEntity(0, customerId, RequestStatus.NEW);
     }
 }

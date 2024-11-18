@@ -2,10 +2,9 @@ package pl.codehouse.restaurant.shelf;
 
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 @Table("shelf")
 record ShelfEntity(

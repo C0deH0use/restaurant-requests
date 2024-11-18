@@ -17,13 +17,13 @@ import reactor.util.function.Tuples;
 @Component
 class PackingCommand implements Command<Integer, PackingActionResult> {
 
-    private final static Logger logger = org.slf4j.LoggerFactory.getLogger(PackingCommand.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(PackingCommand.class);
 
-    private final ShelfBO shelfBO;
+    private final ShelfBo shelfBo;
     private final RequestService requestService;
 
-    PackingCommand(ShelfBO shelfBO, RequestService requestService) {
-        this.shelfBO = shelfBO;
+    PackingCommand(ShelfBo shelfBo, RequestService requestService) {
+        this.shelfBo = shelfBo;
         this.requestService = requestService;
     }
 
@@ -48,16 +48,18 @@ class PackingCommand implements Command<Integer, PackingActionResult> {
         if (shelfTakeResult.itemsTakenFromShelf() == 0) {
             return Mono.empty();
         }
-        return requestService.updateCollectedItems(new UpdatePreparedMenuItemsDto(requestId, requestMenuItem.menuItemId(), shelfTakeResult.itemsTakenFromShelf()));
+        return requestService.updateCollectedItems(
+                new UpdatePreparedMenuItemsDto(requestId, requestMenuItem.menuItemId(), shelfTakeResult.itemsTakenFromShelf()));
     }
 
     private Mono<Tuple2<RequestMenuItem, ShelfTakeResult>> mapShelfTakeResultStatusBasedOnRequestedMenuItem(RequestMenuItem missingItem) {
         if (missingItem.immediatePreparation()) {
-            Tuple2<RequestMenuItem, ShelfTakeResult> immediateItem = Tuples.of(missingItem, new ShelfTakeResult(PackingStatus.READY_TO_COLLECT, missingItem.remainingItems()));
+            Tuple2<RequestMenuItem, ShelfTakeResult> immediateItem =
+                    Tuples.of(missingItem, new ShelfTakeResult(PackingStatus.READY_TO_COLLECT, missingItem.remainingItems()));
             return Mono.just(immediateItem);
         }
         return Mono.just(missingItem)
-                .zipWhen(shelfBO::take);
+                .zipWhen(shelfBo::take);
     }
 
     private PackingActionResult fromRequest(RequestDto requestDto) {

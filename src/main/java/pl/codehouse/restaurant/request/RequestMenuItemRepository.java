@@ -8,5 +8,6 @@ import reactor.core.publisher.Mono;
 @Repository
 interface RequestMenuItemRepository extends ReactiveCrudRepository<RequestMenuItemEntity, Integer> {
     Mono<RequestMenuItemEntity> findByRequestIdAndMenuItemId(int requestId, int menuItemId);
+
     Flux<RequestMenuItemEntity> findByRequestId(int requestId);
 }

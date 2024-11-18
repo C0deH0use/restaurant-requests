@@ -2,10 +2,17 @@ plugins {
     java
     idea
     jacoco
+    checkstyle
     `jvm-test-suite`
     `jacoco-report-aggregation`
     id("org.springframework.boot") version "3.3.3"
     id("io.spring.dependency-management") version "1.1.6"
+}
+
+checkstyle {
+    toolVersion = "10.12.1"
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    sourceSets = listOf(project.sourceSets.main.get())
 }
 
 group = "pl.codehouse.restaurant"

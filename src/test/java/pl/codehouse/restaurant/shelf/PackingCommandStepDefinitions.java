@@ -36,7 +36,7 @@ import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMen
 public class PackingCommandStepDefinitions {
     private static final String MENU_ITEM_1_NAME = "MenuItem 1";
 
-    private final ShelfBO shelfBO = Mockito.mock(ShelfBO.class);
+    private final ShelfBo shelfBO = Mockito.mock(ShelfBo.class);
     private final RequestService requestService = Mockito.mock(RequestService.class);
     private final ArgumentCaptor<UpdatePreparedMenuItemsDto> updatePreparedMenuItemsDtoArgumentCaptor = ArgumentCaptor.captor();
     private final PackingCommand sut = new PackingCommand(shelfBO, requestService);
