@@ -1,15 +1,17 @@
-run:
+.PHONY: build run run-dependencies run-db destroy
+
+build:
 	docker compose build api
+
+run: build
 	docker compose up api
 
 run-dependencies:
-	docker compose up --force-recreate --renew-anon-volumes
+	docker compose --profile dependencies up --force-recreate --renew-anon-volumes
 
 run-db:
-	docker compose up --force-recreate --renew-anon-volumes restaurant-requests-db
-
+	docker compose --profile db up --force-recreate --renew-anon-volumes
 
 destroy:
-	docker stop $$(docker ps -aq) || true
-	docker container stop $$(docker container ls -aq) || true
-	docker container prune --force || true
+	docker compose down -v
+	docker container prune --force

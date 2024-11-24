@@ -1,5 +1,13 @@
 package pl.codehouse.restaurant.request;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
+import java.util.Map;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.assertj.core.api.Assertions;
 import org.flywaydb.core.Flyway;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +19,11 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.KafkaContainer;
 import pl.codehouse.restaurant.TestcontainersConfiguration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.codehouse.restaurant.request.EventType.ITEM_ADDED_ON_SHELF;
 import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_2_ID;
 import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_3_ID;
 import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_4_ID;
@@ -51,16 +63,19 @@ class RequestServiceIntegrationTest {
     private static final int REQUEST_3_ID = REQUEST_ID + 15;
     private static final int REQUEST_4_ID = REQUEST_ID + 25;
     @Autowired
-    private Flyway flyway;
-
-    @Autowired
-    private R2dbcEntityTemplate entityTemplate;
+    private ObjectMapper objectMapper;
 
     @Autowired
     private RequestService sut;
 
+    private Consumer<Integer, String> consumerServiceTest;
+
     @BeforeEach
-    void setUp() {
+    void setUp(
+            @Autowired KafkaContainer kafkaContainer,
+            @Autowired Flyway flyway,
+            @Autowired R2dbcEntityTemplate entityTemplate
+    ) {
         flyway.clean();
         flyway.migrate();
         getInitRequests()
@@ -73,6 +88,15 @@ class RequestServiceIntegrationTest {
                 .flatMap(entityTemplate::insert)
                 .collectList()
                 .block();
+
+        Map<String, Object> testConsumerProps = KafkaTestUtils.consumerProps(
+                kafkaContainer.getBootstrapServers(),
+                "test-request-status-consumer__clientId",
+                "false"
+        );
+        consumerServiceTest = new DefaultKafkaConsumerFactory<Integer, String>(testConsumerProps)
+                .createConsumer("test-consumer__clientId");
+        consumerServiceTest.subscribe(Collections.singletonList("request-status-changes"));
     }
 
     @Test
@@ -141,6 +165,15 @@ class RequestServiceIntegrationTest {
                                             .build());
                 })
                 .verifyComplete();
+
+        ConsumerRecord<Integer, String> singleRecord = KafkaTestUtils.getSingleRecord(consumerServiceTest, "request-status-changes");
+
+        assertThat(singleRecord.value()).isNotNull();
+        Map<String, Object> eventPayload = getEventPayload(singleRecord);
+        assertThat(eventPayload)
+                .containsEntry("requestId", REQUEST_ID)
+                .containsEntry("packingStatus", "IN_PROGRESS")
+                .containsEntry("requestStatus", "IN_PROGRESS");
     }
 
     private static void assertExpectedRequestIds(RequestDto requestDto, LinkedList<Integer> expectedRecords, AtomicInteger totalItemsCount) {
@@ -215,4 +248,11 @@ class RequestServiceIntegrationTest {
         );
     }
 
+    private Map<String, Object> getEventPayload(ConsumerRecord<Integer, String> singleRecord) {
+        try {
+            return objectMapper.readValue(singleRecord.value(), new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            return Assertions.fail("Unable to read Consumer Record and convert to Map<String,Object>", e);
+        }
+    }
 }

@@ -38,7 +38,6 @@ import static pl.codehouse.restaurant.request.RequestedMenuItemPayloadBuilder.aM
 public class RequestStepDefinitions {
     private static final int REQUEST_ID = 1100;
     private static final int VALUE_REPRESENTING_NULL_ID = 0;
-    private static final int UNKNOWN_MENU_ITEM_3 = 1002;
     private static final int CUSTOMER_ID_1 = 1001;
 
     private final RequestRepository repository = Mockito.mock(RequestRepository.class);
@@ -49,11 +48,11 @@ public class RequestStepDefinitions {
 
     private final ShelfKafkaProperties shelfKafkaProperties = Mockito.mock(ShelfKafkaProperties.class);
 
-    private final RequestStatusChangeKafkaProperties requestStatusChangeKafkaProperties = Mockito.mock(RequestStatusChangeKafkaProperties.class);
+    private final RequestStatusChangePublisher requestStatusChangePublisher = Mockito.mock(RequestStatusChangePublisher.class);
 
     private final KafkaTemplate<String, ShelfEventDto> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
 
-    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository, kafkaTemplate, shelfKafkaProperties, requestStatusChangeKafkaProperties);
+    private final CreateCommand command = new CreateCommand(repository, menuItemRepository, requestMenuItemRepository, kafkaTemplate, shelfKafkaProperties, requestStatusChangePublisher);
 
     private Context<RequestPayload> context;
 
@@ -115,7 +114,8 @@ public class RequestStepDefinitions {
 
         then(repository).should(times(1)).save(requestEntityArgumentCaptor.capture());
         then(requestMenuItemRepository).should(times(1)).saveAll(requestMenuItemEntityArgumentCaptor.capture());
-        then(kafkaTemplate).should(times(2)).send(kafkaMessagesArgumentCaptor.capture());
+        then(requestStatusChangePublisher).should(times(1)).publishChange(REQUEST_ID, RequestStatus.IN_PROGRESS, PackingStatus.NOT_STARTED);
+        then(kafkaTemplate).should(times(1)).send(kafkaMessagesArgumentCaptor.capture());
 
         // And
         assertThat(requestEntityArgumentCaptor.getValue())
@@ -130,27 +130,12 @@ public class RequestStepDefinitions {
 
         List<Message<?>> actualKafkaMessages = kafkaMessagesArgumentCaptor.getAllValues();
         assertThat(actualKafkaMessages)
-                .hasSize(2)
-                .satisfiesOnlyOnce(message -> assertThat(message.getPayload()).isInstanceOf(ShelfEventDto.class))
-                .satisfiesOnlyOnce(message -> assertThat(message.getPayload()).isInstanceOf(RequestStatusChangeMessage.class));
-
-        assertThat(actualKafkaMessages)
-                .filteredOn(message -> message.getPayload() instanceof ShelfEventDto)
                 .hasSize(1)
+                .satisfiesExactly(message -> assertThat(message.getPayload()).isInstanceOf(ShelfEventDto.class))
                 .first()
                 .satisfies(message -> assertThat((ShelfEventDto) message.getPayload())
                         .hasFieldOrPropertyWithValue("requestId", requestEntity.id())
                         .hasFieldOrPropertyWithValue("eventType", EventType.NEW_REQUEST)
-                );
-
-        assertThat(actualKafkaMessages)
-                .filteredOn(message -> message.getPayload() instanceof RequestStatusChangeMessage)
-                .hasSize(1)
-                .first()
-                .satisfies(message -> assertThat((RequestStatusChangeMessage) message.getPayload())
-                        .hasFieldOrPropertyWithValue("requestId", requestEntity.id())
-                        .hasFieldOrPropertyWithValue("requestStatus", RequestStatus.IN_PROGRESS)
-                        .hasFieldOrPropertyWithValue("packingStatus", PackingStatus.NOT_STARTED)
                 )
         ;
     }
