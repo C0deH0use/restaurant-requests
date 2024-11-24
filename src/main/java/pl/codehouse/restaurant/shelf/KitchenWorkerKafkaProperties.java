@@ -1,4 +1,4 @@
-package pl.codehouse.restaurant.request;
+package pl.codehouse.restaurant.shelf;
 
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;

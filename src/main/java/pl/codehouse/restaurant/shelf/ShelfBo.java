@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import pl.codehouse.restaurant.exceptions.ResourceNotFoundException;
-import pl.codehouse.restaurant.exceptions.ResourceType;
 import pl.codehouse.restaurant.request.RequestMenuItem;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +18,7 @@ public class ShelfBo {
     private static final Logger logger = LoggerFactory.getLogger(ShelfBo.class);
     private final Clock clock;
     private final ShelfRepository repository;
+    private final KitchenWorkerRequestPublisher workerRequestPublisher;
 
     /**
      * Constructs a new ShelfBO with the specified clock and repository.
@@ -26,9 +26,11 @@ public class ShelfBo {
      * @param clock The clock to use for timestamp operations.
      * @param repository The repository for shelf entity operations.
      */
-    ShelfBo(Clock clock, ShelfRepository repository) {
+    ShelfBo(Clock clock, ShelfRepository repository,
+            KitchenWorkerRequestPublisher workerRequestPublisher) {
         this.clock = clock;
         this.repository = repository;
+        this.workerRequestPublisher = workerRequestPublisher;
     }
 
     /**
@@ -42,33 +44,35 @@ public class ShelfBo {
      */
     public Mono<ShelfTakeResult> take(RequestMenuItem menuItem) {
         logger.info("Collecting {} menu items [{} ==> {}] as requested by customer", menuItem.remainingItems(), menuItem.menuItemId(), menuItem.menuItemName());
-        ShelfEntity block = repository.findByMenuItemId(menuItem.menuItemId())
-                .defaultIfEmpty(createNewShelfItemFor(menuItem))
-                .blockOptional()
-                .orElseThrow((() -> new ResourceNotFoundException("Shelf Entity for the following menu item: %s is missing".formatted(menuItem.menuItemId()),
-                        ResourceType.SHELF_ITEM)));
-
         if (menuItem.remainingItems() <= 0) {
             logger.error("For the following requested menu item [{}: {}], amount need to be greater than zero", menuItem.menuItemName(), menuItem.menuItemId());
-            throw new IllegalArgumentException("Requested menu item amount need to be greater than zero");
+            return Mono.error(new IllegalArgumentException("Requested menu item amount need to be greater than zero"));
         }
 
-        if (block.quantity() < menuItem.remainingItems()) {
+        Mono<ShelfEntity> entityMono = repository.findByMenuItemId(menuItem.menuItemId())
+                .switchIfEmpty(Mono.defer(() -> repository.save(createNewShelfItemFor(menuItem))));
+
+        return entityMono
+                .flatMap(shelfEntity -> takeFromShelfOrRequestFromKitchen(menuItem, shelfEntity));
+    }
+
+    private Mono<ShelfTakeResult> takeFromShelfOrRequestFromKitchen(RequestMenuItem menuItem, ShelfEntity shelfEntity) {
+        if (shelfEntity.quantity() < menuItem.remainingItems()) {
             logger.info("On the Shelf, the menu items of {}: {} have less items then requested in order - {}, requested: {}",
-                    block.itemName(), block.menuItemId(), block.quantity(), menuItem.remainingItems());
-            int quantityToRequest = menuItem.remainingItems() - block.quantity();
-            logger.info("Requesting Kitchen to create {} new menu items {}", quantityToRequest, block.itemName());
-            // send request to kitchen
-            ShelfEntity updateEntity = block.withQuantityUpdate(0, LocalDateTime.now(clock));
+                    shelfEntity.itemName(), shelfEntity.menuItemId(), shelfEntity.quantity(), menuItem.remainingItems());
+            int quantityToRequest = menuItem.remainingItems() - shelfEntity.quantity();
+            workerRequestPublisher.publishRequest(menuItem, quantityToRequest);
+            ShelfEntity updateEntity = shelfEntity.withQuantityUpdate(0, LocalDateTime.now(clock));
+
             return repository.save(updateEntity)
-                    .thenReturn(new ShelfTakeResult(PackingStatus.REQUESTED_ITEMS, block.quantity()));
+                    .thenReturn(new ShelfTakeResult(PackingStatus.REQUESTED_ITEMS, shelfEntity.quantity()));
         }
 
-        int itemsTaken = block.quantity() - menuItem.remainingItems();
-        ShelfEntity updateEntity = block.withQuantityUpdate(itemsTaken, LocalDateTime.now(clock));
+        int itemsTaken = shelfEntity.quantity() - menuItem.remainingItems();
+        ShelfEntity updateEntity = shelfEntity.withQuantityUpdate(itemsTaken, LocalDateTime.now(clock));
+
         return repository.save(updateEntity)
                 .thenReturn(new ShelfTakeResult(PackingStatus.READY_TO_COLLECT, menuItem.remainingItems()));
-
     }
 
     /**
@@ -79,6 +83,6 @@ public class ShelfBo {
      * @return A new ShelfEntity instance.
      */
     private ShelfEntity createNewShelfItemFor(RequestMenuItem menuItem) {
-        return new ShelfEntity(-1, menuItem.menuItemName(), menuItem.menuItemId(), 0, 0, LocalDateTime.now(clock));
+        return new ShelfEntity(0, menuItem.menuItemName(), menuItem.menuItemId(), 0, 0, LocalDateTime.now(clock));
     }
 }

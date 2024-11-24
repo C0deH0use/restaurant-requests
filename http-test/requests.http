@@ -1,3 +1,4 @@
+### @POST: Create new request
 POST http://localhost:8080/request
 Content-Type: application/json
 
@@ -11,11 +12,14 @@ Content-Type: application/json
   ]
 }
 
-
-####
-GET http://localhost:8080/request
+### @GET: Fetch given request
+GET http://localhost:8080/request/1001
 Content-Type: application/json
 
-####
+### @GET: Fetch menu items
 GET http://localhost:8080/request/menu-items
 Content-Type: application/json
+
+### @GET: notification status
+GET http://localhost:8080/request/notification/status
+Content-Type: text/event-stream

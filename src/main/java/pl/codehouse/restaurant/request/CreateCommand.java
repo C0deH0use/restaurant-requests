@@ -33,7 +33,7 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
     private final RequestMenuItemRepository requestMenuItemRepository;
     private final KafkaTemplate<String, ShelfEventDto> kafkaTemplate;
     private final ShelfKafkaProperties shelfKafkaProperties;
-    private final RequestStatusChangeKafkaProperties requestStatusChangeKafkaProperties;
+    private final RequestStatusChangePublisher requestStatusChangePublisher;
 
     CreateCommand(
             RequestRepository repository,
@@ -41,14 +41,14 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
             RequestMenuItemRepository requestMenuItemRepository,
             KafkaTemplate<String, ShelfEventDto> kafkaTemplate,
             ShelfKafkaProperties shelfKafkaProperties,
-            RequestStatusChangeKafkaProperties requestStatusChangeKafkaProperties
+            RequestStatusChangePublisher requestStatusChangePublisher
     ) {
         this.repository = repository;
         this.menuItemRepository = menuItemRepository;
         this.requestMenuItemRepository = requestMenuItemRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.shelfKafkaProperties = shelfKafkaProperties;
-        this.requestStatusChangeKafkaProperties = requestStatusChangeKafkaProperties;
+        this.requestStatusChangePublisher = requestStatusChangePublisher;
     }
 
     @Override
@@ -96,15 +96,9 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
                 ShelfEventDto.newRequestEvent(tuple.getT1().id()),
                 shelfKafkaProperties.kafkaHeaders()
         );
-        Message<RequestStatusChangeMessage> requestStatusMessage = new GenericMessage<>(
-                new RequestStatusChangeMessage(tuple.getT1().id(), tuple.getT1().status(), PackingStatus.NOT_STARTED),
-                requestStatusChangeKafkaProperties.kafkaHeaders()
-        );
         LOGGER.info("Emit event: {} for the following request: {}", shelfMessage.getPayload().eventType(), tuple.getT1());
         kafkaTemplate.send(shelfMessage);
-
-        LOGGER.info("Emit event: {} for the following request: {}", requestStatusMessage.getPayload().getClass().getSimpleName(), tuple.getT1());
-        kafkaTemplate.send(requestStatusMessage);
+        requestStatusChangePublisher.publishChange(tuple.getT1().id(), tuple.getT1().status(), PackingStatus.NOT_STARTED);
     }
 
     private static Function<MenuItemEntity, RequestMenuItemEntity> createMenuItemEntity(

@@ -27,7 +27,7 @@ class RequestResource {
     private final RequestService requestService;
     private final CreateCommand createCommand;
 
-    RequestResource(MenuItemRepository menuItemRepository, RequestService requestService, CreateCommand createCommand, RequestRepository requestRepository) {
+    RequestResource(MenuItemRepository menuItemRepository, RequestService requestService, CreateCommand createCommand) {
         this.menuItemRepository = menuItemRepository;
         this.requestService = requestService;
         this.createCommand = createCommand;
@@ -46,17 +46,6 @@ class RequestResource {
         return requestService.findById(requestId);
     }
 
-    @GetMapping
-    @RequestMapping(consumes = {MediaType.TEXT_EVENT_STREAM_VALUE}, produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
-    Flux<ServerSentEvent<RequestDto>> fetchActiveRequests() {
-        return requestService.fetchActive()
-                .map(dto -> ServerSentEvent.<RequestDto>builder()
-                        .id(String.valueOf(dto.requestId()))
-                        .event("request-status-events")
-                        .data(dto)
-                        .build());
-    }
-
     @GetMapping("/menu-items")
     Mono<List<MenuItem>> fetchAvailableMenuItems() {
         return menuItemRepository.findAll()
@@ -64,7 +53,7 @@ class RequestResource {
                 .collectList();
     }
 
-    @GetMapping(value = "/notification/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/notification/status", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     Flux<ServerSentEvent<RequestStatusDto>> getStatusUpdates() {
         return requestService.listenOnRequestUpdates()
                 .doOnSubscribe(subscription -> logger.info("Client subscribed to notifications"))

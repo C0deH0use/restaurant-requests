@@ -25,6 +25,6 @@ Feature: Shelf - Collecting menu items for a given Request
 
     Given shelf not containing any items
     When request a new Menu Item
-    Then new shelf item should be created with 0 menu items
+    Then request Status should be set to REQUESTED_ITEMS
     And 1 menu items should be requested by the restaurant worker
-    And request Status should be set to REQUESTED_ITEMS
+    And new shelf item should be created with 0 menu items

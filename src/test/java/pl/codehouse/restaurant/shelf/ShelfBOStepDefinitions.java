@@ -1,25 +1,12 @@
 package pl.codehouse.restaurant.shelf;
 
-import io.cucumber.java.ParameterType;
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.apache.commons.lang3.BooleanUtils;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_ID;
 import static pl.codehouse.restaurant.request.MenuItemEntityBuilder.MENU_ITEM_1_NAME;
@@ -29,47 +16,77 @@ import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMen
 import static pl.codehouse.restaurant.request.RequestMenuItemBuilder.aRequestMenuItemTwo;
 import static pl.codehouse.restaurant.shelf.ShelfBuilder.aShelf;
 
+import io.cucumber.java.Before;
+import io.cucumber.java.ParameterType;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import org.apache.commons.lang3.BooleanUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import pl.codehouse.restaurant.request.RequestMenuItem;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 public class ShelfBOStepDefinitions {
     private static final long NEW_VERSION_VALUE = 1L;
 
     private final Clock clock = Clock.fixed(Instant.parse("2024-10-05T15:15:30.00Z"), ZoneOffset.UTC);
-    private final ShelfRepository shelfRepository = Mockito.mock(ShelfRepository.class);
-    private final ArgumentCaptor<ShelfEntity> shelfEntityArgumentCaptor = ArgumentCaptor.forClass(ShelfEntity.class);
     private final LocalDateTime updatedAt = LocalDateTime.now(clock);
-
-    private final ShelfBo sut = new ShelfBo(clock, shelfRepository);
-    long expectedVersion = 2;
+    private ShelfRepository shelfRepository;
+    private KitchenWorkerRequestPublisher workerRequestPublisher;
+    private ArgumentCaptor<ShelfEntity> shelfEntityArgumentCaptor;
+    private ShelfBo sut;
 
     private Mono<ShelfTakeResult> executionResult;
+
+    @Before
+    public void setUp() {
+        shelfRepository = Mockito.mock(ShelfRepository.class);
+        workerRequestPublisher = Mockito.mock(KitchenWorkerRequestPublisher.class);
+        shelfEntityArgumentCaptor = ArgumentCaptor.forClass(ShelfEntity.class);
+       sut = new ShelfBo(clock, shelfRepository, workerRequestPublisher);
+    }
 
     @Given("the shelf contains {int} menu items from request")
     public void given_ShelfContainsXMenuItemsFromRequest(int shelfItems) {
         given(shelfRepository.save(any())).willReturn(Mono.just(aShelf().build()));
 
-        given(shelfRepository.findByMenuItemId(MENU_ITEM_1_ID)).willReturn(Mono.just(aShelf()
+        ShelfEntity shelfEntity = aShelf()
                 .aShelfWithAvailableMenuItems()
                 .withMenuId(MENU_ITEM_1_ID)
                 .withName(MENU_ITEM_1_NAME)
                 .withItemsRemaining(shelfItems)
-                .build()
-        ));
+                .build();
+        given(shelfRepository.findByMenuItemId(MENU_ITEM_1_ID)).willReturn(Mono.defer(() -> Mono.just(shelfEntity)));
     }
-
 
     @Given("shelf not containing any items")
     public void shelfNotContainingAnyItems() {
-        given(shelfRepository.save(any())).willReturn(Mono.just(aShelf().build()));
         given(shelfRepository.findByMenuItemId(MENU_ITEM_2_ID)).willReturn(Mono.empty());
+        given(shelfRepository.save(any())).willAnswer(invocation -> {
+            ShelfEntity savedEntity = invocation.getArgument(0);
+            return Mono.just(savedEntity);
+        });
     }
 
     @When("handling requested {int} Menu Items")
     public void when_RequestWithXMenuItems(int menuItemsRequested) {
-        executionResult = sut.take(aRequestMenuItemOne().withQuantity(menuItemsRequested).build());
+        RequestMenuItem requestMenuItem = aRequestMenuItemOne().withQuantity(menuItemsRequested).build();
+        executionResult = Mono.defer(() -> sut.take(requestMenuItem));
     }
 
     @When("request a new Menu Item")
     public void requestANewMenuItem() {
-        executionResult = sut.take(aRequestMenuItemTwo().withQuantity(1).build());
+        RequestMenuItem requestMenuItem = aRequestMenuItemTwo().build();
+        executionResult = sut.take(requestMenuItem);
     }
 
     @Then("request should be updated with {int} prepared menu items from the shelf")
@@ -80,21 +97,24 @@ public class ShelfBOStepDefinitions {
     }
 
     @Then("new shelf item should be created with {int} menu items")
-    public void newShelfItemShouldBeCreatedWithMenuItems(int arg0) {
-        then(shelfRepository).should(times(1)).save(shelfEntityArgumentCaptor.capture());
+    public void newShelfItemShouldBeCreatedWithMenuItems(int expectedQuantity) {
+        then(shelfRepository).should(times(2)).save(shelfEntityArgumentCaptor.capture());
 
-        assertThat(shelfEntityArgumentCaptor.getValue())
-                .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_2_ID)
-                .hasFieldOrPropertyWithValue("itemName", MENU_ITEM_2_NAME)
-                .hasFieldOrPropertyWithValue("quantity", arg0)
-                .hasFieldOrPropertyWithValue("version", NEW_VERSION_VALUE)
-                .hasFieldOrPropertyWithValue("updatedAt", updatedAt);
+        assertThat(shelfEntityArgumentCaptor.getAllValues())
+                .allSatisfy(shelf -> assertThat(shelf)
+                        .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_2_ID)
+                        .hasFieldOrPropertyWithValue("itemName", MENU_ITEM_2_NAME)
+                        .hasFieldOrPropertyWithValue("quantity", expectedQuantity)
+                        .hasFieldOrPropertyWithValue("updatedAt", updatedAt))
+                .extracting(ShelfEntity::version)
+                .containsExactlyInAnyOrderElementsOf(List.of(0L, NEW_VERSION_VALUE));
     }
 
     @And("shelf should be updated with {int} menu items taken for request")
     public void and_ShelfShouldBeUpdatedWithXMenuItemsTakenForRequestAndVersionShouldBeUpdated(int collectedItems) {
         then(shelfRepository).should(times(1)).save(shelfEntityArgumentCaptor.capture());
 
+        long expectedVersion = 2;
         assertThat(shelfEntityArgumentCaptor.getValue())
                 .hasFieldOrPropertyWithValue("menuItemId", MENU_ITEM_1_ID)
                 .hasFieldOrPropertyWithValue("itemName", MENU_ITEM_1_NAME)
@@ -112,8 +132,11 @@ public class ShelfBOStepDefinitions {
 
     @And("{int} menu items should be requested by the restaurant worker")
     public void and_XMenuItemsShouldBeRequestedByTheRestaurantWorker(int menuItemsRequested) {
-        // This step is more of a business process step and doesn't require additional assertions in the test
-        // In a real-world scenario, this might involve calling another service or updating a status
+        if (menuItemsRequested == 0) {
+            then(workerRequestPublisher).should(never()).publishRequest(any(), nullable(Integer.class));
+            return;
+        }
+        then(workerRequestPublisher).should(times(1)).publishRequest(any(RequestMenuItem.class), eq(menuItemsRequested));
     }
 
     @ParameterType("READY_TO_COLLECT|REQUESTED_ITEMS")

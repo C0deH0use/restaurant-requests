@@ -18,7 +18,9 @@ class RequestStatusChangeListener {
         this.notificationSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
-    @KafkaListener(topics = "${app.kafka.request-status.topic.topic-name}", groupId = "request-status-change-group")
+    @KafkaListener(
+            topics = "${app.kafka.request-status.topic.topic-name}",
+            groupId = "request-status-change-group")
     void listen(RequestStatusChangeMessage message) {
         logger.info("Received request status change: {}", message);
         notificationSink.tryEmitNext(message);
