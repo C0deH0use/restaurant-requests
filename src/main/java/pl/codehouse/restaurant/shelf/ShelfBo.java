@@ -43,9 +43,14 @@ public class ShelfBo {
      * @throws IllegalArgumentException if the requested quantity is not positive.
      */
     public Mono<ShelfTakeResult> take(RequestMenuItem menuItem) {
-        logger.info("Collecting {} menu items [{} ==> {}] as requested by customer", menuItem.remainingItems(), menuItem.menuItemId(), menuItem.menuItemName());
+        logger.info(
+                "Collecting {} menu items [{} ==> {}] as requested by customer",
+                menuItem.remainingItems(), menuItem.menuItemId(), menuItem.menuItemName());
+
         if (menuItem.remainingItems() <= 0) {
-            logger.error("For the following requested menu item [{}: {}], amount need to be greater than zero", menuItem.menuItemName(), menuItem.menuItemId());
+            logger.error("For the following requested menu item [{}: {}], amount need to be greater than zero", 
+                    menuItem.menuItemName(), 
+                    menuItem.menuItemId());
             return Mono.error(new IllegalArgumentException("Requested menu item amount need to be greater than zero"));
         }
 

@@ -28,7 +28,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.apache.commons.lang3.BooleanUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import pl.codehouse.restaurant.request.RequestMenuItem;
@@ -52,7 +51,7 @@ public class ShelfBOStepDefinitions {
         shelfRepository = Mockito.mock(ShelfRepository.class);
         workerRequestPublisher = Mockito.mock(KitchenWorkerRequestPublisher.class);
         shelfEntityArgumentCaptor = ArgumentCaptor.forClass(ShelfEntity.class);
-       sut = new ShelfBo(clock, shelfRepository, workerRequestPublisher);
+        sut = new ShelfBo(clock, shelfRepository, workerRequestPublisher);
     }
 
     @Given("the shelf contains {int} menu items from request")
