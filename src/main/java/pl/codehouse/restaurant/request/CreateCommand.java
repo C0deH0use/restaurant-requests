@@ -57,7 +57,10 @@ class CreateCommand implements Command<RequestPayload, RequestDto> {
         List<RequestedMenuItemsPayload> menuItems = context.request().menuItems();
         LOGGER.info("Executing the creation of new Request for Customer: {} with Menu Items: {}", context.request().customerId(), menuItems);
 
-        List<Integer> menuItemIds = menuItems.stream().map(RequestedMenuItemsPayload::menuId).toList();
+        List<Integer> menuItemIds = menuItems
+                .stream()
+                .map(RequestedMenuItemsPayload::menuId)
+                .toList();
         return menuItemRepository.findAllById(menuItemIds)
                 .collectList()
                 .flatMap(validateAndCreateNew(context))
