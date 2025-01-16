@@ -54,7 +54,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
-    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("org.apache.commons:commons-lang3:3.17.0")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
